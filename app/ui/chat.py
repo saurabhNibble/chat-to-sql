@@ -4,7 +4,7 @@ CHAT_HTML_CONTENT = r"""<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title>ChatSQL Pro | Text-to-SQL Clarification Engine</title>
   <style>
     :root {
@@ -25,6 +25,7 @@ CHAT_HTML_CONTENT = r"""<!DOCTYPE html>
       --danger: #ef4444;
       --code-bg: #070a12;
       --sidebar-width: 280px;
+      --header-height: 56px;
     }
 
     * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -34,50 +35,65 @@ CHAT_HTML_CONTENT = r"""<!DOCTYPE html>
       background-color: var(--bg-primary);
       color: var(--text-main);
       height: 100vh;
+      height: 100dvh;
       display: flex;
       flex-direction: column;
       overflow: hidden;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
     }
 
-    /* Global Header */
+    /* -------------------------------------------------------------
+       GLOBAL HEADER (RESPONSIVE)
+       ------------------------------------------------------------- */
     .app-header {
-      height: 56px;
-      background-color: var(--bg-secondary);
+      height: var(--header-height);
+      background-color: rgba(19, 27, 46, 0.95);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
       border-bottom: 1px solid var(--border-color);
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: 0 1.25rem;
+      padding: 0 1rem;
       z-index: 50;
       flex-shrink: 0;
+      gap: 0.5rem;
     }
 
     .header-left {
       display: flex;
       align-items: center;
-      gap: 1.25rem;
+      gap: 0.85rem;
+      min-width: 0;
     }
 
     .brand {
       display: flex;
       align-items: center;
-      gap: 0.6rem;
+      gap: 0.5rem;
       font-weight: 700;
-      font-size: 1.1rem;
+      font-size: 1.05rem;
       color: var(--text-main);
       text-decoration: none;
+      flex-shrink: 0;
     }
 
     .brand-icon {
       background: linear-gradient(135deg, #0284c7, #38bdf8);
-      width: 30px;
-      height: 30px;
+      width: 32px;
+      height: 32px;
       border-radius: 8px;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 0.95rem;
+      font-size: 1rem;
       box-shadow: 0 0 12px var(--accent-glow);
+      flex-shrink: 0;
+    }
+
+    .brand-text {
+      white-space: nowrap;
     }
 
     .nav-mode-tabs {
@@ -93,15 +109,16 @@ CHAT_HTML_CONTENT = r"""<!DOCTYPE html>
       background: none;
       border: none;
       color: var(--text-muted);
-      padding: 0.4rem 0.9rem;
-      font-size: 0.84rem;
+      padding: 0.4rem 0.75rem;
+      font-size: 0.82rem;
       font-weight: 600;
       border-radius: 6px;
       cursor: pointer;
       display: flex;
       align-items: center;
-      gap: 0.4rem;
+      gap: 0.35rem;
       transition: all 0.2s;
+      white-space: nowrap;
     }
 
     .nav-mode-btn:hover { color: var(--text-main); }
@@ -111,10 +128,20 @@ CHAT_HTML_CONTENT = r"""<!DOCTYPE html>
       box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
     }
 
+    .nav-text-short { display: none; }
+    .nav-text-full { display: inline; }
+
     .header-right {
       display: flex;
       align-items: center;
-      gap: 0.75rem;
+      gap: 0.5rem;
+      flex-shrink: 0;
+    }
+
+    .header-badges {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
     }
 
     .badge {
@@ -125,6 +152,7 @@ CHAT_HTML_CONTENT = r"""<!DOCTYPE html>
       padding: 0.25rem 0.65rem;
       border-radius: 9999px;
       border: 1px solid transparent;
+      white-space: nowrap;
     }
 
     .badge-db {
@@ -139,11 +167,15 @@ CHAT_HTML_CONTENT = r"""<!DOCTYPE html>
       border-color: rgba(56, 189, 248, 0.3);
     }
 
+    .badge-text-short { display: none; }
+    .badge-text-full { display: inline; }
+
     /* Layout Containers */
     .view-container {
       display: flex;
       flex: 1;
-      height: calc(100vh - 56px);
+      height: calc(100vh - var(--header-height));
+      height: calc(100dvh - var(--header-height));
       overflow: hidden;
       position: relative;
     }
@@ -156,6 +188,24 @@ CHAT_HTML_CONTENT = r"""<!DOCTYPE html>
       width: 100%;
       height: 100%;
       overflow: hidden;
+      position: relative;
+    }
+
+    /* Sidebar Drawer */
+    .sidebar-backdrop {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(11, 15, 25, 0.75);
+      backdrop-filter: blur(4px);
+      z-index: 1040;
+      opacity: 0;
+      transition: opacity 0.25s ease;
+    }
+
+    .sidebar-backdrop.active {
+      display: block;
+      opacity: 1;
     }
 
     .sidebar {
@@ -165,7 +215,8 @@ CHAT_HTML_CONTENT = r"""<!DOCTYPE html>
       display: flex;
       flex-direction: column;
       flex-shrink: 0;
-      transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+      transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1), margin-right 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+      z-index: 1050;
     }
 
     .sidebar.collapsed {
@@ -174,14 +225,15 @@ CHAT_HTML_CONTENT = r"""<!DOCTYPE html>
     }
 
     .sidebar-header {
-      padding: 1rem;
+      padding: 0.85rem 1rem;
       border-bottom: 1px solid var(--border-color);
       display: flex;
-      flex-direction: column;
-      gap: 0.75rem;
+      align-items: center;
+      gap: 0.5rem;
     }
 
     .btn-new-chat {
+      flex: 1;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -189,12 +241,13 @@ CHAT_HTML_CONTENT = r"""<!DOCTYPE html>
       background: linear-gradient(135deg, #0284c7, #0369a1);
       color: #ffffff;
       border: 1px solid rgba(56, 189, 248, 0.4);
-      padding: 0.6rem 1rem;
+      padding: 0.55rem 0.9rem;
       border-radius: 8px;
       font-weight: 600;
-      font-size: 0.86rem;
+      font-size: 0.84rem;
       cursor: pointer;
       transition: all 0.2s;
+      min-height: 38px;
     }
 
     .btn-new-chat:hover {
@@ -202,22 +255,38 @@ CHAT_HTML_CONTENT = r"""<!DOCTYPE html>
       transform: translateY(-1px);
     }
 
+    .btn-sidebar-close {
+      display: none;
+      background: var(--bg-tertiary);
+      border: 1px solid var(--border-color);
+      color: var(--text-muted);
+      width: 34px;
+      height: 34px;
+      border-radius: 6px;
+      cursor: pointer;
+      align-items: center;
+      justify-content: center;
+      font-size: 1rem;
+      flex-shrink: 0;
+    }
+
     .sidebar-title {
-      font-size: 0.75rem;
+      font-size: 0.74rem;
       text-transform: uppercase;
       letter-spacing: 0.05em;
       color: var(--text-dim);
-      padding: 0.8rem 1rem 0.3rem;
+      padding: 0.75rem 1rem 0.25rem;
       font-weight: 700;
     }
 
     .history-list {
       flex: 1;
       overflow-y: auto;
-      padding: 0.4rem 0.65rem;
+      padding: 0.35rem 0.65rem;
       display: flex;
       flex-direction: column;
       gap: 0.25rem;
+      -webkit-overflow-scrolling: touch;
     }
 
     .history-item {
@@ -228,9 +297,10 @@ CHAT_HTML_CONTENT = r"""<!DOCTYPE html>
       border-radius: 6px;
       cursor: pointer;
       color: var(--text-muted);
-      font-size: 0.85rem;
+      font-size: 0.84rem;
       border: 1px solid transparent;
       user-select: none;
+      min-height: 38px;
     }
 
     .history-item:hover {
@@ -258,27 +328,31 @@ CHAT_HTML_CONTENT = r"""<!DOCTYPE html>
       border: none;
       color: var(--text-dim);
       cursor: pointer;
-      opacity: 0;
-      padding: 2px 4px;
+      padding: 4px;
       border-radius: 4px;
-      font-size: 0.8rem;
+      font-size: 0.85rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
     }
 
     .history-item:hover .btn-delete-chat { opacity: 0.8; }
     .btn-delete-chat:hover { color: var(--danger); opacity: 1; }
 
     .sidebar-footer {
-      padding: 0.85rem 1rem;
+      padding: 0.75rem 1rem;
       border-top: 1px solid var(--border-color);
       background-color: rgba(11, 15, 25, 0.5);
     }
 
+    /* Main Chat Layout */
     .chat-main {
       flex: 1;
       display: flex;
       flex-direction: column;
       height: 100%;
       overflow: hidden;
+      min-width: 0;
     }
 
     .chat-topbar {
@@ -287,38 +361,50 @@ CHAT_HTML_CONTENT = r"""<!DOCTYPE html>
       border-bottom: 1px solid var(--border-color);
       display: flex;
       align-items: center;
-      padding: 0 1.25rem;
+      padding: 0 1rem;
       gap: 0.75rem;
+      flex-shrink: 0;
     }
 
     .btn-sidebar-toggle {
-      background: none;
+      background: var(--bg-tertiary);
       border: 1px solid var(--border-color);
       color: var(--text-muted);
-      width: 28px;
-      height: 28px;
+      width: 32px;
+      height: 32px;
       border-radius: 6px;
       cursor: pointer;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 0.9rem;
+      font-size: 1rem;
+      flex-shrink: 0;
+      transition: all 0.15s;
+    }
+
+    .btn-sidebar-toggle:hover {
+      color: var(--text-main);
+      border-color: var(--accent);
     }
 
     .chat-topbar-title {
       font-weight: 600;
       font-size: 0.92rem;
       color: var(--text-main);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
 
     #chat-viewport {
       flex: 1;
       overflow-y: auto;
-      padding: 1.5rem;
+      padding: 1.25rem 1rem;
       display: flex;
       flex-direction: column;
       gap: 1.25rem;
       scroll-behavior: smooth;
+      -webkit-overflow-scrolling: touch;
     }
 
     /* Welcome Hero */
@@ -329,10 +415,11 @@ CHAT_HTML_CONTENT = r"""<!DOCTYPE html>
       justify-content: center;
       text-align: center;
       margin: auto 0;
-      padding: 2rem 1rem;
-      max-width: 750px;
+      padding: 1.5rem 0.5rem;
+      max-width: 760px;
       margin-left: auto;
       margin-right: auto;
+      width: 100%;
     }
 
     .hero-badge {
@@ -341,26 +428,28 @@ CHAT_HTML_CONTENT = r"""<!DOCTYPE html>
       border: 1px solid rgba(56, 189, 248, 0.3);
       padding: 0.35rem 0.85rem;
       border-radius: 9999px;
-      font-size: 0.8rem;
+      font-size: 0.78rem;
       font-weight: 600;
       margin-bottom: 1rem;
+      text-align: center;
     }
 
     .hero-title {
-      font-size: 2rem;
+      font-size: clamp(1.4rem, 4.5vw, 2.1rem);
       font-weight: 800;
       letter-spacing: -0.03em;
-      margin-bottom: 0.75rem;
+      margin-bottom: 0.65rem;
       background: linear-gradient(135deg, #ffffff 40%, #94a3b8);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
+      line-height: 1.25;
     }
 
     .hero-subtitle {
-      font-size: 0.95rem;
+      font-size: clamp(0.85rem, 2.5vw, 0.95rem);
       color: var(--text-muted);
-      line-height: 1.5;
-      margin-bottom: 1.75rem;
+      line-height: 1.55;
+      margin-bottom: 1.5rem;
       max-width: 600px;
     }
 
@@ -397,12 +486,13 @@ CHAT_HTML_CONTENT = r"""<!DOCTYPE html>
     .suggestion-desc {
       font-size: 0.76rem;
       color: var(--text-muted);
+      line-height: 1.4;
     }
 
     /* Message Bubbles */
     .message {
       display: flex;
-      gap: 0.85rem;
+      gap: 0.75rem;
       max-width: 860px;
       width: 100%;
       margin: 0 auto;
@@ -411,13 +501,13 @@ CHAT_HTML_CONTENT = r"""<!DOCTYPE html>
     .message.user { flex-direction: row-reverse; }
 
     .avatar-icon {
-      width: 34px;
-      height: 34px;
+      width: 32px;
+      height: 32px;
       border-radius: 50%;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 0.95rem;
+      font-size: 0.9rem;
       flex-shrink: 0;
     }
 
@@ -433,11 +523,13 @@ CHAT_HTML_CONTENT = r"""<!DOCTYPE html>
     }
 
     .bubble {
-      padding: 1rem 1.2rem;
+      padding: 0.85rem 1.1rem;
       border-radius: 12px;
-      max-width: calc(100% - 50px);
+      max-width: calc(100% - 46px);
       line-height: 1.6;
-      font-size: 0.92rem;
+      font-size: 0.9rem;
+      word-break: break-word;
+      overflow-wrap: break-word;
     }
 
     .message.user .bubble {
@@ -450,6 +542,7 @@ CHAT_HTML_CONTENT = r"""<!DOCTYPE html>
       background: var(--bg-secondary);
       border: 1px solid var(--border-color);
       border-bottom-left-radius: 2px;
+      width: 100%;
     }
 
     /* Layman Terms & Efficiency Cards */
@@ -458,8 +551,8 @@ CHAT_HTML_CONTENT = r"""<!DOCTYPE html>
       border-left: 3px solid var(--accent);
       padding: 0.75rem 0.9rem;
       border-radius: 4px;
-      margin-bottom: 0.85rem;
-      font-size: 0.9rem;
+      margin-bottom: 0.75rem;
+      font-size: 0.88rem;
       line-height: 1.5;
     }
 
@@ -470,17 +563,15 @@ CHAT_HTML_CONTENT = r"""<!DOCTYPE html>
       display: flex;
       align-items: center;
       gap: 0.35rem;
-      font-size: 0.84rem;
+      font-size: 0.82rem;
     }
 
     .efficiency-grid {
       display: grid;
       grid-template-columns: 1fr 1fr;
       gap: 0.65rem;
-      margin: 0.85rem 0;
+      margin: 0.75rem 0;
     }
-
-    @media (max-width: 640px) { .efficiency-grid { grid-template-columns: 1fr; } }
 
     .efficiency-card {
       padding: 0.7rem 0.85rem;
@@ -511,18 +602,20 @@ CHAT_HTML_CONTENT = r"""<!DOCTYPE html>
       border: 1px solid var(--border-color);
       border-radius: 8px;
       overflow: hidden;
+      width: 100%;
     }
 
     .sql-box-header {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: 0.35rem 0.8rem;
+      padding: 0.35rem 0.75rem;
       background: var(--bg-tertiary);
       border-bottom: 1px solid var(--border-color);
-      font-size: 0.75rem;
+      font-size: 0.74rem;
       color: var(--text-muted);
       font-weight: 600;
+      gap: 0.5rem;
     }
 
     .btn-copy-sql {
@@ -530,43 +623,57 @@ CHAT_HTML_CONTENT = r"""<!DOCTYPE html>
       border: 1px solid var(--border-color);
       color: var(--text-muted);
       border-radius: 4px;
-      padding: 2px 6px;
-      font-size: 0.7rem;
+      padding: 3px 8px;
+      font-size: 0.72rem;
       cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.25rem;
+      min-height: 26px;
     }
 
     .btn-copy-sql:hover { color: var(--text-main); border-color: var(--accent); }
 
     .sql-code-text {
-      padding: 0.75rem 0.9rem;
+      padding: 0.75rem 0.85rem;
       font-family: 'JetBrains Mono', Consolas, monospace;
-      font-size: 0.86rem;
+      font-size: 0.84rem;
       color: #7dd3fc;
       overflow-x: auto;
-      white-space: pre-wrap;
+      white-space: pre;
+      -webkit-overflow-scrolling: touch;
+      line-height: 1.5;
     }
 
     /* Table Results */
     .table-container {
-      margin-top: 0.85rem;
+      margin-top: 0.75rem;
       border: 1px solid var(--border-color);
       border-radius: 8px;
-      overflow: hidden;
-      max-height: 250px;
+      overflow-x: auto;
       overflow-y: auto;
+      max-height: 250px;
+      -webkit-overflow-scrolling: touch;
+      width: 100%;
     }
 
-    table { width: 100%; border-collapse: collapse; font-size: 0.82rem; text-align: left; }
+    table { width: 100%; border-collapse: collapse; font-size: 0.8rem; text-align: left; }
     th {
       background-color: var(--bg-tertiary);
       color: var(--text-muted);
       font-weight: 600;
-      padding: 0.55rem 0.8rem;
+      padding: 0.5rem 0.75rem;
       position: sticky;
       top: 0;
       border-bottom: 1px solid var(--border-color);
+      white-space: nowrap;
     }
-    td { padding: 0.5rem 0.8rem; border-bottom: 1px solid var(--border-color); color: var(--text-main); }
+    td {
+      padding: 0.45rem 0.75rem;
+      border-bottom: 1px solid var(--border-color);
+      color: var(--text-main);
+      white-space: nowrap;
+    }
     tr:nth-child(even) { background-color: rgba(255, 255, 255, 0.02); }
     tr:hover { background-color: rgba(56, 189, 248, 0.05); }
 
@@ -575,21 +682,25 @@ CHAT_HTML_CONTENT = r"""<!DOCTYPE html>
       background: rgba(245, 158, 11, 0.08);
       border: 1px solid rgba(245, 158, 11, 0.3);
       border-radius: 8px;
-      padding: 0.9rem;
-      margin-top: 0.4rem;
+      padding: 0.85rem;
+      margin-top: 0.35rem;
     }
 
-    .clarification-title { font-weight: 700; color: var(--warning); font-size: 0.9rem; margin-bottom: 0.4rem; }
+    .clarification-title { font-weight: 700; color: var(--warning); font-size: 0.88rem; margin-bottom: 0.35rem; }
     .options-grid { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.6rem; }
     .option-btn {
       background: var(--bg-tertiary);
       border: 1px solid rgba(245, 158, 11, 0.4);
       color: var(--text-main);
-      padding: 0.4rem 0.85rem;
+      padding: 0.45rem 0.85rem;
       border-radius: 6px;
       font-size: 0.82rem;
       font-weight: 600;
       cursor: pointer;
+      min-height: 36px;
+      display: inline-flex;
+      align-items: center;
+      transition: all 0.15s;
     }
     .option-btn:hover { background: rgba(245, 158, 11, 0.25); border-color: var(--warning); }
 
@@ -597,28 +708,32 @@ CHAT_HTML_CONTENT = r"""<!DOCTYPE html>
       display: flex;
       align-items: center;
       justify-content: space-between;
-      margin-top: 0.75rem;
+      margin-top: 0.65rem;
       padding-top: 0.45rem;
       border-top: 1px solid rgba(255, 255, 255, 0.06);
       font-size: 0.74rem;
       color: var(--text-dim);
+      gap: 0.5rem;
+      flex-wrap: wrap;
     }
 
     /* Input Bar */
     .chat-input-bar {
-      padding: 0.85rem 1.25rem 1.1rem;
+      padding: 0.75rem 1rem calc(0.75rem + env(safe-area-inset-bottom, 0px));
       background: linear-gradient(180deg, transparent, var(--bg-primary) 35%);
+      flex-shrink: 0;
     }
 
     .chat-form {
       max-width: 860px;
       margin: 0 auto;
       display: flex;
-      gap: 0.65rem;
+      gap: 0.5rem;
       background: var(--bg-secondary);
       border: 1px solid var(--border-color);
       border-radius: 12px;
-      padding: 0.4rem 0.5rem 0.4rem 0.9rem;
+      padding: 0.35rem 0.45rem 0.35rem 0.85rem;
+      align-items: flex-end;
     }
 
     .chat-form:focus-within { border-color: var(--accent); box-shadow: 0 0 12px var(--accent-glow); }
@@ -629,11 +744,12 @@ CHAT_HTML_CONTENT = r"""<!DOCTYPE html>
       border: none;
       outline: none;
       color: var(--text-main);
-      font-size: 0.92rem;
+      font-size: 16px; /* Prevents auto-zoom on iOS */
       resize: none;
       max-height: 120px;
-      line-height: 1.5;
-      padding: 0.35rem 0;
+      line-height: 1.45;
+      padding: 0.45rem 0;
+      font-family: inherit;
     }
 
     .btn-send {
@@ -641,15 +757,21 @@ CHAT_HTML_CONTENT = r"""<!DOCTYPE html>
       color: #ffffff;
       border: none;
       border-radius: 8px;
-      padding: 0 1.1rem;
+      padding: 0 1rem;
       font-weight: 600;
-      font-size: 0.88rem;
+      font-size: 0.86rem;
       cursor: pointer;
       display: flex;
       align-items: center;
+      justify-content: center;
       gap: 0.35rem;
-      height: 36px;
-      align-self: flex-end;
+      height: 38px;
+      flex-shrink: 0;
+      transition: all 0.2s;
+    }
+
+    .btn-send:hover {
+      background: linear-gradient(135deg, #0369a1, #0284c7);
     }
 
     /* -------------------------------------------------------------
@@ -664,46 +786,88 @@ CHAT_HTML_CONTENT = r"""<!DOCTYPE html>
     }
 
     .battleground-topbar {
-      height: 48px;
+      min-height: 48px;
       background-color: var(--bg-secondary);
       border-bottom: 1px solid var(--border-color);
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: 0 1.25rem;
+      padding: 0.35rem 1rem;
       flex-shrink: 0;
+      gap: 0.5rem;
+      flex-wrap: wrap;
     }
 
     .battleground-controls {
       display: flex;
       align-items: center;
-      gap: 0.75rem;
+      gap: 0.5rem;
+      flex-wrap: wrap;
     }
 
     .problem-select-btn {
       display: flex;
       align-items: center;
-      gap: 0.5rem;
+      gap: 0.45rem;
       background: var(--bg-tertiary);
       border: 1px solid var(--border-color);
       color: var(--text-main);
-      padding: 0.35rem 0.85rem;
+      padding: 0.35rem 0.75rem;
       border-radius: 6px;
-      font-size: 0.85rem;
+      font-size: 0.82rem;
       font-weight: 600;
       cursor: pointer;
+      min-height: 34px;
+      white-space: nowrap;
+      transition: all 0.15s;
     }
 
     .problem-select-btn:hover { border-color: var(--accent); }
 
     .progress-pill {
-      font-size: 0.8rem;
+      font-size: 0.78rem;
       color: var(--accent);
       background: rgba(56, 189, 248, 0.1);
       border: 1px solid rgba(56, 189, 248, 0.3);
-      padding: 0.25rem 0.65rem;
+      padding: 0.25rem 0.6rem;
       border-radius: 9999px;
       font-weight: 600;
+      white-space: nowrap;
+    }
+
+    /* Arena Mobile Segmented Switcher */
+    .arena-mobile-tabs {
+      display: none;
+      background: var(--bg-primary);
+      border-bottom: 1px solid var(--border-color);
+      padding: 4px 0.75rem;
+      gap: 4px;
+      flex-shrink: 0;
+    }
+
+    .arena-mobile-tab {
+      flex: 1;
+      background: none;
+      border: 1px solid transparent;
+      color: var(--text-muted);
+      padding: 0.45rem 0.5rem;
+      font-size: 0.82rem;
+      font-weight: 600;
+      border-radius: 6px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.35rem;
+      transition: all 0.15s;
+      min-height: 34px;
+    }
+
+    .arena-mobile-tab.active {
+      background: var(--bg-elevated);
+      color: var(--accent);
+      border-color: rgba(56, 189, 248, 0.3);
+      box-shadow: 0 1px 4px rgba(0,0,0,0.3);
     }
 
     .arena-grid {
@@ -714,10 +878,6 @@ CHAT_HTML_CONTENT = r"""<!DOCTYPE html>
       overflow: hidden;
     }
 
-    @media (max-width: 900px) {
-      .arena-grid { grid-template-columns: 1fr; grid-template-rows: 45% 55%; }
-    }
-
     /* Problem Description Pane */
     .problem-pane {
       background-color: var(--bg-primary);
@@ -726,26 +886,27 @@ CHAT_HTML_CONTENT = r"""<!DOCTYPE html>
       flex-direction: column;
       height: 100%;
       overflow-y: auto;
-      padding: 1.5rem;
+      padding: 1.25rem;
+      -webkit-overflow-scrolling: touch;
     }
 
     .problem-header {
-      margin-bottom: 1.25rem;
+      margin-bottom: 1.1rem;
       display: flex;
       flex-direction: column;
-      gap: 0.6rem;
+      gap: 0.5rem;
     }
 
     .problem-meta {
       display: flex;
       align-items: center;
-      gap: 0.6rem;
+      gap: 0.5rem;
       flex-wrap: wrap;
     }
 
     .diff-badge {
-      font-size: 0.75rem;
-      padding: 0.2rem 0.6rem;
+      font-size: 0.74rem;
+      padding: 0.2rem 0.55rem;
       border-radius: 9999px;
       font-weight: 700;
     }
@@ -755,32 +916,33 @@ CHAT_HTML_CONTENT = r"""<!DOCTYPE html>
     .diff-Hard { background: rgba(239, 68, 68, 0.15); color: var(--danger); border: 1px solid rgba(239, 68, 68, 0.4); }
 
     .category-badge {
-      font-size: 0.75rem;
+      font-size: 0.74rem;
       color: var(--text-muted);
       background: var(--bg-tertiary);
-      padding: 0.2rem 0.6rem;
+      padding: 0.2rem 0.55rem;
       border-radius: 6px;
     }
 
     .problem-title {
-      font-size: 1.35rem;
+      font-size: 1.25rem;
       font-weight: 700;
       color: var(--text-main);
+      line-height: 1.35;
     }
 
     .problem-section {
-      margin-bottom: 1.25rem;
+      margin-bottom: 1.2rem;
       line-height: 1.6;
-      font-size: 0.92rem;
+      font-size: 0.9rem;
     }
 
     .section-title {
-      font-size: 0.82rem;
+      font-size: 0.8rem;
       font-weight: 700;
       text-transform: uppercase;
       letter-spacing: 0.05em;
       color: var(--accent);
-      margin-bottom: 0.5rem;
+      margin-bottom: 0.45rem;
       display: flex;
       align-items: center;
       gap: 0.35rem;
@@ -789,9 +951,9 @@ CHAT_HTML_CONTENT = r"""<!DOCTYPE html>
     .layman-box {
       background: var(--bg-secondary);
       border-left: 3px solid var(--accent);
-      padding: 1rem;
+      padding: 0.85rem 1rem;
       border-radius: 6px;
-      font-size: 0.92rem;
+      font-size: 0.9rem;
       line-height: 1.55;
     }
 
@@ -802,37 +964,44 @@ CHAT_HTML_CONTENT = r"""<!DOCTYPE html>
       flex-direction: column;
       height: 100%;
       overflow: hidden;
+      min-width: 0;
     }
 
     .studio-header {
-      height: 42px;
+      height: 40px;
       background: var(--bg-tertiary);
       border-bottom: 1px solid var(--border-color);
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: 0 1rem;
-      font-size: 0.8rem;
+      padding: 0 0.85rem;
+      font-size: 0.78rem;
       color: var(--text-muted);
+      flex-shrink: 0;
+      gap: 0.5rem;
     }
 
     .studio-actions {
       display: flex;
       align-items: center;
-      gap: 0.5rem;
+      gap: 0.4rem;
     }
 
     .btn-studio-action {
       background: var(--bg-secondary);
       border: 1px solid var(--border-color);
       color: var(--text-muted);
-      padding: 0.25rem 0.65rem;
+      padding: 0.3rem 0.65rem;
       border-radius: 5px;
       font-size: 0.76rem;
       cursor: pointer;
-      display: flex;
+      display: inline-flex;
       align-items: center;
+      justify-content: center;
       gap: 0.3rem;
+      min-height: 30px;
+      white-space: nowrap;
+      transition: all 0.15s;
     }
 
     .btn-studio-action:hover { color: var(--text-main); border-color: var(--accent); }
@@ -843,43 +1012,51 @@ CHAT_HTML_CONTENT = r"""<!DOCTYPE html>
       flex-direction: column;
       background: var(--code-bg);
       position: relative;
+      min-height: 130px;
     }
 
     #sql-editor {
       flex: 1;
       width: 100%;
+      height: 100%;
       background: transparent;
       border: none;
       color: #7dd3fc;
       font-family: 'JetBrains Mono', Consolas, monospace;
-      font-size: 0.9rem;
-      padding: 1rem;
+      font-size: 14px;
+      padding: 0.85rem;
       resize: none;
       outline: none;
       line-height: 1.5;
+      -webkit-overflow-scrolling: touch;
     }
 
     .studio-footer {
-      padding: 0.65rem 1rem;
+      padding: 0.55rem 0.85rem;
       background: var(--bg-secondary);
       border-top: 1px solid var(--border-color);
       display: flex;
       align-items: center;
       justify-content: space-between;
+      gap: 0.6rem;
+      flex-shrink: 0;
     }
 
     .btn-run-code {
       background: var(--bg-tertiary);
       color: var(--text-main);
       border: 1px solid var(--border-color);
-      padding: 0.5rem 1.1rem;
+      padding: 0.5rem 1rem;
       border-radius: 6px;
       font-weight: 600;
       font-size: 0.84rem;
       cursor: pointer;
-      display: flex;
+      display: inline-flex;
       align-items: center;
+      justify-content: center;
       gap: 0.4rem;
+      min-height: 38px;
+      transition: all 0.15s;
     }
 
     .btn-run-code:hover { background: var(--bg-elevated); border-color: var(--accent); }
@@ -888,15 +1065,18 @@ CHAT_HTML_CONTENT = r"""<!DOCTYPE html>
       background: linear-gradient(135deg, #059669, #10b981);
       color: #ffffff;
       border: none;
-      padding: 0.5rem 1.3rem;
+      padding: 0.5rem 1.2rem;
       border-radius: 6px;
       font-weight: 600;
-      font-size: 0.86rem;
+      font-size: 0.84rem;
       cursor: pointer;
-      display: flex;
+      display: inline-flex;
       align-items: center;
+      justify-content: center;
       gap: 0.4rem;
+      min-height: 38px;
       box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);
+      transition: all 0.15s;
     }
 
     .btn-submit-code:hover { background: linear-gradient(135deg, #047857, #059669); transform: translateY(-1px); }
@@ -904,11 +1084,14 @@ CHAT_HTML_CONTENT = r"""<!DOCTYPE html>
     /* Output Console Drawer */
     .console-drawer {
       height: 200px;
+      max-height: 50%;
+      min-height: 140px;
       background: var(--bg-primary);
       border-top: 1px solid var(--border-color);
       display: flex;
       flex-direction: column;
       overflow: hidden;
+      flex-shrink: 0;
     }
 
     .console-tabs {
@@ -919,6 +1102,7 @@ CHAT_HTML_CONTENT = r"""<!DOCTYPE html>
       align-items: center;
       padding: 0 0.75rem;
       gap: 0.5rem;
+      flex-shrink: 0;
     }
 
     .console-tab {
@@ -937,14 +1121,26 @@ CHAT_HTML_CONTENT = r"""<!DOCTYPE html>
     .console-body {
       flex: 1;
       overflow-y: auto;
-      padding: 0.85rem;
+      padding: 0.75rem;
       font-size: 0.84rem;
+      -webkit-overflow-scrolling: touch;
     }
 
     .status-pill-accepted { color: var(--success); font-weight: 700; display: inline-flex; align-items: center; gap: 0.35rem; }
     .status-pill-wrong { color: var(--danger); font-weight: 700; display: inline-flex; align-items: center; gap: 0.35rem; }
     .status-pill-error { color: var(--warning); font-weight: 700; display: inline-flex; align-items: center; gap: 0.35rem; }
 
+    /* Mini Tables Comparison in Console */
+    .console-diff-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.75rem;
+      margin-top: 0.75rem;
+    }
+
+    /* -------------------------------------------------------------
+       MODALS & DIALOGS (RESPONSIVE)
+       ------------------------------------------------------------- */
     /* Problems Catalog Modal */
     dialog.problems-modal {
       border: 1px solid var(--border-color);
@@ -953,8 +1149,8 @@ CHAT_HTML_CONTENT = r"""<!DOCTYPE html>
       color: var(--text-main);
       padding: 0;
       max-width: 720px;
-      width: 92%;
-      height: 80vh;
+      width: 94vw;
+      height: 82vh;
       max-height: 720px;
       box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.9);
       position: fixed;
@@ -976,10 +1172,11 @@ CHAT_HTML_CONTENT = r"""<!DOCTYPE html>
     dialog.problems-modal::backdrop {
       background: rgba(11, 15, 25, 0.82);
       backdrop-filter: blur(6px);
+      -webkit-backdrop-filter: blur(6px);
     }
 
     .problems-modal-header {
-      padding: 1.1rem 1.4rem;
+      padding: 0.9rem 1.25rem;
       border-bottom: 1px solid var(--border-color);
       display: flex;
       align-items: center;
@@ -989,18 +1186,17 @@ CHAT_HTML_CONTENT = r"""<!DOCTYPE html>
     }
 
     .problems-filter-bar {
-      padding: 0.85rem 1.4rem;
+      padding: 0.75rem 1.25rem;
       background: var(--bg-primary);
       border-bottom: 1px solid var(--border-color);
       display: flex;
-      gap: 0.65rem;
+      gap: 0.5rem;
       flex-wrap: wrap;
       flex-shrink: 0;
     }
 
     .filter-input {
-      flex: 1;
-      min-width: 170px;
+      flex: 1 1 160px;
       background: var(--bg-secondary);
       border: 1px solid var(--border-color);
       border-radius: 6px;
@@ -1008,6 +1204,7 @@ CHAT_HTML_CONTENT = r"""<!DOCTYPE html>
       color: var(--text-main);
       font-size: 0.84rem;
       outline: none;
+      min-height: 34px;
     }
 
     .filter-input:focus, .filter-select:focus {
@@ -1015,6 +1212,7 @@ CHAT_HTML_CONTENT = r"""<!DOCTYPE html>
     }
 
     .filter-select {
+      flex: 0 1 auto;
       background: var(--bg-secondary);
       border: 1px solid var(--border-color);
       border-radius: 6px;
@@ -1023,27 +1221,30 @@ CHAT_HTML_CONTENT = r"""<!DOCTYPE html>
       font-size: 0.84rem;
       outline: none;
       cursor: pointer;
+      min-height: 34px;
     }
 
     .problem-items-container {
       flex: 1;
       overflow-y: auto;
-      padding: 0.85rem 1.4rem;
+      padding: 0.75rem 1.25rem;
       display: flex;
       flex-direction: column;
       gap: 0.45rem;
+      -webkit-overflow-scrolling: touch;
     }
 
     .catalog-item {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: 0.75rem 1rem;
+      padding: 0.65rem 0.85rem;
       border-radius: 8px;
       background: var(--bg-primary);
       border: 1px solid var(--border-color);
       cursor: pointer;
       transition: all 0.15s ease;
+      gap: 0.5rem;
     }
 
     .catalog-item:hover {
@@ -1055,20 +1256,25 @@ CHAT_HTML_CONTENT = r"""<!DOCTYPE html>
     .catalog-item-left {
       display: flex;
       align-items: center;
-      gap: 0.75rem;
+      gap: 0.65rem;
+      min-width: 0;
     }
 
     .catalog-item-num {
       color: var(--text-dim);
-      font-size: 0.82rem;
+      font-size: 0.8rem;
       font-weight: 700;
       min-width: 28px;
+      flex-shrink: 0;
     }
 
     .catalog-item-title {
-      font-size: 0.9rem;
+      font-size: 0.88rem;
       font-weight: 600;
       color: var(--text-main);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
 
     /* Auth Dialog */
@@ -1079,7 +1285,7 @@ CHAT_HTML_CONTENT = r"""<!DOCTYPE html>
       color: var(--text-main);
       padding: 0;
       max-width: 440px;
-      width: 92%;
+      width: 92vw;
       box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.9);
       position: fixed;
       inset: 0;
@@ -1099,11 +1305,12 @@ CHAT_HTML_CONTENT = r"""<!DOCTYPE html>
     dialog.auth-modal::backdrop {
       background: rgba(11, 15, 25, 0.82);
       backdrop-filter: blur(6px);
+      -webkit-backdrop-filter: blur(6px);
     }
 
-    .auth-modal-content { padding: 1.75rem; }
+    .auth-modal-content { padding: 1.5rem; }
     .auth-modal-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.25rem; }
-    .auth-title { font-size: 1.2rem; font-weight: 700; }
+    .auth-title { font-size: 1.15rem; font-weight: 700; }
 
     .btn-close-modal {
       background: var(--bg-tertiary);
@@ -1111,8 +1318,8 @@ CHAT_HTML_CONTENT = r"""<!DOCTYPE html>
       color: var(--text-muted);
       cursor: pointer;
       font-size: 0.95rem;
-      width: 30px;
-      height: 30px;
+      width: 32px;
+      height: 32px;
       border-radius: 6px;
       display: flex;
       align-items: center;
@@ -1124,11 +1331,12 @@ CHAT_HTML_CONTENT = r"""<!DOCTYPE html>
       color: var(--text-main);
       border-color: var(--accent);
     }
+
     .auth-tabs { display: flex; background: var(--bg-primary); border-radius: 8px; padding: 3px; margin-bottom: 1.25rem; border: 1px solid var(--border-color); }
-    .auth-tab { flex: 1; background: none; border: none; color: var(--text-muted); padding: 0.5rem; font-size: 0.85rem; font-weight: 600; border-radius: 6px; cursor: pointer; }
+    .auth-tab { flex: 1; background: none; border: none; color: var(--text-muted); padding: 0.5rem; font-size: 0.84rem; font-weight: 600; border-radius: 6px; cursor: pointer; min-height: 34px; }
     .auth-tab.active { background: var(--bg-elevated); color: var(--text-main); }
     .social-auth-group { display: flex; flex-direction: column; gap: 0.65rem; margin-bottom: 1.25rem; }
-    .btn-social { display: flex; align-items: center; justify-content: center; gap: 0.75rem; padding: 0.65rem 1rem; border-radius: 8px; font-weight: 600; font-size: 0.88rem; cursor: pointer; border: 1px solid var(--border-color); }
+    .btn-social { display: flex; align-items: center; justify-content: center; gap: 0.75rem; padding: 0.65rem 1rem; border-radius: 8px; font-weight: 600; font-size: 0.86rem; cursor: pointer; border: 1px solid var(--border-color); min-height: 40px; }
     .btn-google { background: #ffffff; color: #1f2937; }
     .btn-github { background: #181717; color: #ffffff; border-color: #334155; }
     .auth-divider { display: flex; align-items: center; text-align: center; margin: 1.1rem 0; color: var(--text-dim); font-size: 0.78rem; }
@@ -1136,13 +1344,9 @@ CHAT_HTML_CONTENT = r"""<!DOCTYPE html>
     .auth-divider span { padding: 0 0.75rem; }
     .auth-form-fields { display: flex; flex-direction: column; gap: 0.85rem; }
     .auth-input-group label { display: block; font-size: 0.8rem; font-weight: 600; margin-bottom: 0.3rem; color: var(--text-muted); }
-    .auth-input-group input { width: 100%; background: var(--bg-primary); border: 1px solid var(--border-color); border-radius: 6px; padding: 0.6rem 0.75rem; color: var(--text-main); font-size: 0.9rem; outline: none; }
-    .btn-auth-submit { margin-top: 0.5rem; width: 100%; background: linear-gradient(135deg, #0284c7, #38bdf8); color: #ffffff; border: none; border-radius: 8px; padding: 0.7rem; font-weight: 600; font-size: 0.92rem; cursor: pointer; }
+    .auth-input-group input { width: 100%; background: var(--bg-primary); border: 1px solid var(--border-color); border-radius: 6px; padding: 0.6rem 0.75rem; color: var(--text-main); font-size: 16px; outline: none; min-height: 40px; }
+    .btn-auth-submit { margin-top: 0.5rem; width: 100%; background: linear-gradient(135deg, #0284c7, #38bdf8); color: #ffffff; border: none; border-radius: 8px; padding: 0.7rem; font-weight: 600; font-size: 0.92rem; cursor: pointer; min-height: 42px; }
     .auth-error-banner { background: rgba(239, 68, 68, 0.15); border: 1px solid rgba(239, 68, 68, 0.4); color: #fca5a5; padding: 0.6rem 0.85rem; border-radius: 6px; font-size: 0.82rem; margin-top: 0.85rem; display: none; }
-
-    /* Scrollbar */
-    ::-webkit-scrollbar { width: 6px; height: 6px; }
-    ::-webkit-scrollbar-thumb { background: var(--bg-elevated); border-radius: 9999px; }
 
     /* Chrome Ask Gemini-Style Side Panel */
     .side-panel-backdrop {
@@ -1150,6 +1354,7 @@ CHAT_HTML_CONTENT = r"""<!DOCTYPE html>
       inset: 0;
       background: rgba(11, 15, 25, 0.65);
       backdrop-filter: blur(4px);
+      -webkit-backdrop-filter: blur(4px);
       z-index: 1199;
       opacity: 0;
       pointer-events: none;
@@ -1166,8 +1371,9 @@ CHAT_HTML_CONTENT = r"""<!DOCTYPE html>
       top: 0;
       right: 0;
       width: 480px;
-      max-width: 95vw;
+      max-width: 100vw;
       height: 100vh;
+      height: 100dvh;
       background: var(--bg-secondary);
       border-left: 1px solid var(--border-color);
       box-shadow: -15px 0 45px rgba(0, 0, 0, 0.7);
@@ -1183,7 +1389,7 @@ CHAT_HTML_CONTENT = r"""<!DOCTYPE html>
     }
 
     .side-panel-header {
-      padding: 1rem 1.25rem;
+      padding: 0.85rem 1.15rem;
       background: var(--bg-tertiary);
       border-bottom: 1px solid var(--border-color);
       display: flex;
@@ -1211,7 +1417,7 @@ CHAT_HTML_CONTENT = r"""<!DOCTYPE html>
     }
 
     .ai-panel-title {
-      font-size: 1rem;
+      font-size: 0.95rem;
       font-weight: 700;
       color: var(--text-main);
     }
@@ -1236,15 +1442,16 @@ CHAT_HTML_CONTENT = r"""<!DOCTYPE html>
       border: none;
       border-bottom: 2px solid transparent;
       color: var(--text-dim);
-      font-size: 0.84rem;
+      font-size: 0.82rem;
       font-weight: 600;
-      padding: 0.65rem 0.5rem;
+      padding: 0.6rem 0.5rem;
       cursor: pointer;
       display: flex;
       align-items: center;
       justify-content: center;
       gap: 0.4rem;
       transition: all 0.15s;
+      min-height: 36px;
     }
 
     .side-panel-tab:hover {
@@ -1262,26 +1469,27 @@ CHAT_HTML_CONTENT = r"""<!DOCTYPE html>
     .side-panel-body {
       flex: 1;
       overflow-y: auto;
-      padding: 1.25rem;
+      padding: 1.15rem;
       display: flex;
       flex-direction: column;
       gap: 1rem;
+      -webkit-overflow-scrolling: touch;
     }
 
     .ai-card {
       background: var(--bg-primary);
       border: 1px solid var(--border-color);
       border-radius: 8px;
-      padding: 1rem;
+      padding: 0.9rem;
     }
 
     .ai-card-header {
-      font-size: 0.8rem;
+      font-size: 0.78rem;
       font-weight: 700;
       text-transform: uppercase;
       letter-spacing: 0.05em;
       color: var(--accent);
-      margin-bottom: 0.5rem;
+      margin-bottom: 0.45rem;
       display: flex;
       align-items: center;
       gap: 0.4rem;
@@ -1320,6 +1528,7 @@ CHAT_HTML_CONTENT = r"""<!DOCTYPE html>
       align-items: center;
       gap: 0.4rem;
       transition: all 0.2s;
+      min-height: 38px;
     }
 
     .btn-apply-solution:hover {
@@ -1342,6 +1551,7 @@ CHAT_HTML_CONTENT = r"""<!DOCTYPE html>
       cursor: pointer;
       box-shadow: 0 2px 8px rgba(168, 85, 247, 0.3);
       transition: all 0.2s;
+      min-height: 36px;
     }
 
     .btn-ask-ai-error:hover {
@@ -1362,8 +1572,8 @@ CHAT_HTML_CONTENT = r"""<!DOCTYPE html>
     }
 
     .ai-pulse-dot {
-      width: 42px;
-      height: 42px;
+      width: 40px;
+      height: 40px;
       border-radius: 50%;
       border: 3px solid rgba(56, 189, 248, 0.2);
       border-top-color: var(--accent);
@@ -1372,6 +1582,149 @@ CHAT_HTML_CONTENT = r"""<!DOCTYPE html>
 
     @keyframes spin {
       to { transform: rotate(360deg); }
+    }
+
+    /* Scrollbars */
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-thumb { background: var(--bg-elevated); border-radius: 9999px; }
+
+    /* -------------------------------------------------------------
+       RESPONSIVE BREAKPOINTS (TABLETS & MOBILE)
+       ------------------------------------------------------------- */
+    @media (max-width: 1024px) {
+      .badge-text-full { display: none; }
+      .badge-text-short { display: inline; }
+      .nav-mode-btn { padding: 0.35rem 0.6rem; font-size: 0.8rem; }
+    }
+
+    @media (max-width: 900px) {
+      /* Arena Responsive Layout with Mobile Tabs */
+      .arena-mobile-tabs {
+        display: flex;
+      }
+
+      .arena-grid {
+        display: flex;
+        flex-direction: column;
+        height: calc(100% - 48px - 44px);
+      }
+
+      .problem-pane {
+        display: flex;
+        width: 100%;
+        height: 100%;
+        border-right: none;
+      }
+
+      .studio-pane {
+        display: none;
+        width: 100%;
+        height: 100%;
+      }
+
+      .console-drawer {
+        height: 220px;
+        max-height: 45%;
+      }
+    }
+
+    @media (max-width: 768px) {
+      /* Header on Tablets / Mobile */
+      .app-header {
+        padding: 0 0.75rem;
+      }
+
+      .header-badges {
+        display: none; /* Keep header clean and uncrowded on mobile */
+      }
+
+      .nav-text-full { display: none; }
+      .nav-text-short { display: inline; }
+
+      /* Off-Canvas Drawer for Sidebar */
+      .sidebar {
+        position: fixed;
+        top: 0;
+        left: 0;
+        bottom: 0;
+        height: 100vh;
+        height: 100dvh;
+        z-index: 1100;
+        transform: translateX(-100%);
+        margin-right: 0 !important;
+        box-shadow: 10px 0 35px rgba(0, 0, 0, 0.7);
+      }
+
+      .sidebar.mobile-open {
+        transform: translateX(0);
+      }
+
+      .btn-sidebar-close {
+        display: flex;
+      }
+
+      /* Chat viewport */
+      #chat-viewport {
+        padding: 1rem 0.65rem;
+        gap: 1rem;
+      }
+
+      .message {
+        gap: 0.5rem;
+      }
+
+      .bubble {
+        padding: 0.75rem 0.9rem;
+        max-width: calc(100% - 40px);
+      }
+
+      .efficiency-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .chat-input-bar {
+        padding: 0.5rem 0.65rem calc(0.5rem + env(safe-area-inset-bottom, 0px));
+      }
+    }
+
+    @media (max-width: 640px) {
+      .brand-text { display: none; }
+
+      .suggestion-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .console-diff-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .problems-filter-bar {
+        flex-direction: column;
+        padding: 0.65rem 1rem;
+      }
+
+      .filter-input, .filter-select {
+        width: 100%;
+        flex: 1 1 100%;
+      }
+
+      .catalog-item {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.35rem;
+      }
+
+      .studio-footer {
+        flex-direction: row;
+      }
+
+      .btn-run-code, .btn-submit-code {
+        flex: 1;
+      }
+
+      .ai-side-panel {
+        width: 100%;
+      }
     }
   </style>
 </head>
@@ -1382,21 +1735,31 @@ CHAT_HTML_CONTENT = r"""<!DOCTYPE html>
   <div class="header-left">
     <a href="/" class="brand">
       <div class="brand-icon">⚡</div>
-      <span>ChatSQL Pro</span>
+      <span class="brand-text">ChatSQL Pro</span>
     </a>
     <div class="nav-mode-tabs">
       <button class="nav-mode-btn active" id="tab-nav-chat" onclick="switchView('chat')">
-        💬 Chat & Tutor
+        <span class="nav-text-full">💬 Chat & Tutor</span>
+        <span class="nav-text-short">💬 Chat</span>
       </button>
       <button class="nav-mode-btn" id="tab-nav-battleground" onclick="switchView('battleground')">
-        ⚔️ SQL Battleground (Top 50)
+        <span class="nav-text-full">⚔️ SQL Battleground (Top 50)</span>
+        <span class="nav-text-short">⚔️ Arena</span>
       </button>
     </div>
   </div>
 
   <div class="header-right">
-    <span class="badge badge-db">🟢 PostgreSQL (34M Rows)</span>
-    <span class="badge badge-ai">⚡ AI SQL Mentor · Active</span>
+    <div class="header-badges">
+      <span class="badge badge-db">
+        <span class="badge-text-full">🟢 PostgreSQL (34M Rows)</span>
+        <span class="badge-text-short">🟢 34M DB</span>
+      </span>
+      <span class="badge badge-ai">
+        <span class="badge-text-full">⚡ AI SQL Mentor · Active</span>
+        <span class="badge-text-short">⚡ AI Active</span>
+      </span>
+    </div>
     <div id="header-user-slot">
       <button class="btn-studio-action" onclick="openAuthModal('login')">Sign In</button>
     </div>
@@ -1409,11 +1772,15 @@ CHAT_HTML_CONTENT = r"""<!DOCTYPE html>
        VIEW 1: CHAT TUTOR VIEW
        ============================================================= -->
   <div id="chat-view">
+    <!-- Backdrop for mobile drawer -->
+    <div class="sidebar-backdrop" id="sidebar-backdrop" onclick="toggleSidebar(false)"></div>
+
     <aside class="sidebar" id="sidebar">
       <div class="sidebar-header">
         <button class="btn-new-chat" id="btn-new-chat">
           <span>＋</span> New Chat
         </button>
+        <button class="btn-sidebar-close" id="btn-close-sidebar" onclick="toggleSidebar(false)" title="Close Sidebar">✕</button>
       </div>
 
       <div class="sidebar-title">Recent Chats</div>
@@ -1465,7 +1832,7 @@ CHAT_HTML_CONTENT = r"""<!DOCTYPE html>
 
       <div class="chat-input-bar">
         <form class="chat-form" id="chat-form">
-          <textarea id="prompt-input" rows="1" placeholder="Ask a SQL question, query your database, or ask for interview practice..."></textarea>
+          <textarea id="prompt-input" rows="1" placeholder="Ask a SQL question, query database, or practice..."></textarea>
           <button type="submit" class="btn-send" id="btn-send">Send ➔</button>
         </form>
       </div>
@@ -1479,20 +1846,30 @@ CHAT_HTML_CONTENT = r"""<!DOCTYPE html>
     <div class="battleground-topbar">
       <div class="battleground-controls">
         <button class="problem-select-btn" onclick="openProblemCatalog()">
-          <span>📋</span> Select Challenge (<span id="current-q-index">1</span>/50)
+          <span>📋</span> Challenge (<span id="current-q-index">1</span>/50)
         </button>
         <span class="progress-pill" id="arena-progress-badge">🏆 Solved: 0 / 50</span>
       </div>
 
       <div class="battleground-controls">
-        <button class="btn-studio-action" style="background: rgba(56, 189, 248, 0.1); border-color: rgba(56, 189, 248, 0.3); color: var(--accent); font-weight: 600;" onclick="openAiSidePanel('hint')">💡 Get Hint</button>
-        <button class="btn-studio-action" style="background: rgba(168, 85, 247, 0.1); border-color: rgba(168, 85, 247, 0.3); color: #c084fc; font-weight: 600;" onclick="openAiSidePanel('solution')">👁 Show Solution</button>
+        <button class="btn-studio-action" style="background: rgba(56, 189, 248, 0.1); border-color: rgba(56, 189, 248, 0.3); color: var(--accent); font-weight: 600;" onclick="openAiSidePanel('hint')">💡 Hint</button>
+        <button class="btn-studio-action" style="background: rgba(168, 85, 247, 0.1); border-color: rgba(168, 85, 247, 0.3); color: #c084fc; font-weight: 600;" onclick="openAiSidePanel('solution')">👁 Solution</button>
       </div>
+    </div>
+
+    <!-- Mobile/Tablet Segmented Switcher (<900px) -->
+    <div class="arena-mobile-tabs" id="arena-mobile-tabs">
+      <button class="arena-mobile-tab active" id="btn-pane-problem" onclick="switchArenaPane('problem')">
+        📖 Problem Description
+      </button>
+      <button class="arena-mobile-tab" id="btn-pane-studio" onclick="switchArenaPane('studio')">
+        💻 Code Studio & Output
+      </button>
     </div>
 
     <div class="arena-grid">
       <!-- Left: Problem Description -->
-      <div class="problem-pane">
+      <div class="problem-pane" id="arena-problem-pane">
         <div class="problem-header">
           <div class="problem-meta">
             <span class="diff-badge diff-Easy" id="q-diff-badge">Easy</span>
@@ -1529,7 +1906,7 @@ CHAT_HTML_CONTENT = r"""<!DOCTYPE html>
       </div>
 
       <!-- Right: Interactive Code Studio -->
-      <div class="studio-pane">
+      <div class="studio-pane" id="arena-studio-pane">
         <div class="studio-header">
           <span>SQL (PostgreSQL 15 Dialect)</span>
           <div class="studio-actions">
@@ -1599,7 +1976,7 @@ CHAT_HTML_CONTENT = r"""<!DOCTYPE html>
 <!-- Problems Catalog Dialog -->
 <dialog class="problems-modal" id="catalog-dialog">
   <div class="problems-modal-header">
-    <div style="font-weight: 700; font-size: 1.15rem;">⚔️ LeetCode Top 50 SQL Battleground</div>
+    <div style="font-weight: 700; font-size: 1.1rem;">⚔️ SQL Battleground Catalog</div>
     <button class="btn-close-modal" onclick="document.getElementById('catalog-dialog').close()">✕</button>
   </div>
   <div class="problems-filter-bar">
@@ -1646,7 +2023,7 @@ CHAT_HTML_CONTENT = r"""<!DOCTYPE html>
           <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
           <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
         </svg>
-        Continue with Google (Gmail)
+        Continue with Google
       </button>
 
       <button class="btn-social btn-github" onclick="loginWithGithub()">
@@ -1685,6 +2062,7 @@ CHAT_HTML_CONTENT = r"""<!DOCTYPE html>
   let currentUser = null;
   let currentAuthMode = 'login';
   let currentView = 'chat'; // 'chat' or 'battleground'
+  let currentArenaPane = 'problem'; // 'problem' or 'studio' for mobile/tablet (<900px)
 
   // Battleground State
   let allBattlegroundQuestions = [];
@@ -1711,6 +2089,64 @@ CHAT_HTML_CONTENT = r"""<!DOCTYPE html>
       chatView.style.display = 'flex';
       tabChat.classList.add('active');
       tabBattle.classList.remove('active');
+    }
+  }
+
+  // Mobile/Tablet Arena Pane Switcher
+  function switchArenaPane(paneName) {
+    currentArenaPane = paneName;
+    const btnProblem = document.getElementById('btn-pane-problem');
+    const btnStudio = document.getElementById('btn-pane-studio');
+    const problemPane = document.getElementById('arena-problem-pane');
+    const studioPane = document.getElementById('arena-studio-pane');
+
+    if (paneName === 'studio') {
+      btnStudio.classList.add('active');
+      btnProblem.classList.remove('active');
+      if (window.innerWidth <= 900) {
+        problemPane.style.display = 'none';
+        studioPane.style.display = 'flex';
+      }
+    } else {
+      btnProblem.classList.add('active');
+      btnStudio.classList.remove('active');
+      if (window.innerWidth <= 900) {
+        studioPane.style.display = 'none';
+        problemPane.style.display = 'flex';
+      }
+    }
+  }
+
+  // Handle window resizing for arena panes
+  window.addEventListener('resize', () => {
+    const problemPane = document.getElementById('arena-problem-pane');
+    const studioPane = document.getElementById('arena-studio-pane');
+    if (window.innerWidth > 900) {
+      if (problemPane) problemPane.style.display = 'flex';
+      if (studioPane) studioPane.style.display = 'flex';
+    } else {
+      switchArenaPane(currentArenaPane);
+    }
+  });
+
+  // Responsive Sidebar Drawer Toggle
+  function toggleSidebar(forceState) {
+    const sidebar = document.getElementById('sidebar');
+    const backdrop = document.getElementById('sidebar-backdrop');
+    const isMobile = window.innerWidth <= 768;
+
+    if (isMobile) {
+      const open = forceState !== undefined ? forceState : !sidebar.classList.contains('mobile-open');
+      if (open) {
+        sidebar.classList.add('mobile-open');
+        backdrop.classList.add('active');
+      } else {
+        sidebar.classList.remove('mobile-open');
+        backdrop.classList.remove('active');
+      }
+    } else {
+      sidebar.classList.toggle('collapsed');
+      backdrop.classList.remove('active');
     }
   }
 
@@ -1748,9 +2184,9 @@ CHAT_HTML_CONTENT = r"""<!DOCTYPE html>
     const avatar = user.avatar_url || `https://api.dicebear.com/7.x/identicon/svg?seed=${user.email}`;
 
     const profileHtml = `
-      <div style="display: flex; align-items: center; gap: 0.6rem;">
-        <img src="${avatar}" style="width: 28px; height: 28px; border-radius: 50%; border: 1px solid var(--border-color);">
-        <span style="font-size: 0.85rem; font-weight: 600;">${escapeHtml(user.name)}</span>
+      <div style="display: flex; align-items: center; gap: 0.5rem;">
+        <img src="${avatar}" style="width: 28px; height: 28px; border-radius: 50%; border: 1px solid var(--border-color);" alt="${escapeHtml(user.name)}">
+        <span style="font-size: 0.82rem; font-weight: 600; max-width: 90px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${escapeHtml(user.name)}</span>
         <button class="btn-studio-action" onclick="logout()" title="Sign Out">Sign Out</button>
       </div>
     `;
@@ -1761,7 +2197,7 @@ CHAT_HTML_CONTENT = r"""<!DOCTYPE html>
   function renderLoggedOutFooter() {
     const slot = document.getElementById('header-user-slot');
     const sidebarFooter = document.getElementById('sidebar-footer');
-    const btnHtml = `<button class="btn-studio-action" onclick="openAuthModal('login')">👤 Sign In / Register</button>`;
+    const btnHtml = `<button class="btn-studio-action" onclick="openAuthModal('login')">👤 Sign In</button>`;
     slot.innerHTML = btnHtml;
     sidebarFooter.innerHTML = btnHtml;
   }
@@ -1889,10 +2325,12 @@ CHAT_HTML_CONTENT = r"""<!DOCTYPE html>
   const chatForm = document.getElementById('chat-form');
   const sendBtn = document.getElementById('btn-send');
   const chatViewport = document.getElementById('chat-viewport');
-  const sidebar = document.getElementById('sidebar');
 
-  document.getElementById('btn-toggle-sidebar').addEventListener('click', () => sidebar.classList.toggle('collapsed'));
-  document.getElementById('btn-new-chat').addEventListener('click', () => startNewChat());
+  document.getElementById('btn-toggle-sidebar').addEventListener('click', () => toggleSidebar());
+  document.getElementById('btn-new-chat').addEventListener('click', () => {
+    startNewChat();
+    if (window.innerWidth <= 768) toggleSidebar(false);
+  });
 
   promptInput.addEventListener('input', () => {
     promptInput.style.height = 'auto';
@@ -1971,6 +2409,8 @@ CHAT_HTML_CONTENT = r"""<!DOCTYPE html>
     document.querySelectorAll('.history-item').forEach(el => el.classList.remove('active'));
     const activeItem = document.getElementById(`conv-item-${conversationId}`);
     if (activeItem) activeItem.classList.add('active');
+
+    if (window.innerWidth <= 768) toggleSidebar(false);
 
     try {
       const res = await fetch(`/api/v1/conversations/${conversationId}`, { headers: getAuthHeader() });
@@ -2312,13 +2752,13 @@ CHAT_HTML_CONTENT = r"""<!DOCTYPE html>
       <div class="catalog-item" onclick="selectProblemFromCatalog('${q.id}')">
         <div class="catalog-item-left">
           <span class="catalog-item-num">#${q.number}</span>
-          <div>
+          <div style="min-width: 0;">
             <div class="catalog-item-title">${escapeHtml(q.title)}</div>
             <div style="font-size: 0.75rem; color: var(--text-dim); margin-top: 2px;">${escapeHtml(q.category)}</div>
           </div>
           ${q.is_solved ? '<span style="color: var(--success); font-size: 0.9rem;" title="Solved">✅</span>' : ''}
         </div>
-        <div style="display: flex; align-items: center; gap: 0.6rem;">
+        <div style="display: flex; align-items: center; gap: 0.5rem; flex-shrink: 0;">
           <span class="diff-badge diff-${q.difficulty}">${q.difficulty}</span>
           <span style="font-size: 0.76rem; color: var(--text-dim);">${q.acceptance_rate}</span>
         </div>
@@ -2365,6 +2805,7 @@ CHAT_HTML_CONTENT = r"""<!DOCTYPE html>
   function resetStarterCode() {
     if (currentProblem) {
       document.getElementById('sql-editor').value = currentProblem.starter_code;
+      if (window.innerWidth <= 900) switchArenaPane('studio');
     }
   }
 
@@ -2372,6 +2813,8 @@ CHAT_HTML_CONTENT = r"""<!DOCTYPE html>
     if (!currentProblem) return;
     const sql = document.getElementById('sql-editor').value.trim();
     if (!sql) return;
+
+    if (window.innerWidth <= 900) switchArenaPane('studio');
 
     const consoleEl = document.getElementById('console-output');
     consoleEl.innerHTML = '<div style="color: var(--accent); padding: 1rem;">Executing query against PostgreSQL...</div>';
@@ -2393,6 +2836,8 @@ CHAT_HTML_CONTENT = r"""<!DOCTYPE html>
     if (!currentProblem) return;
     const sql = document.getElementById('sql-editor').value.trim();
     if (!sql) return;
+
+    if (window.innerWidth <= 900) switchArenaPane('studio');
 
     const consoleEl = document.getElementById('console-output');
     consoleEl.innerHTML = '<div style="color: var(--accent); padding: 1rem;">Evaluating test cases and recording submission...</div>';
@@ -2618,6 +3063,7 @@ CHAT_HTML_CONTENT = r"""<!DOCTYPE html>
     editor.value = lastSolutionData.sql.trim() + '\n';
     editor.focus();
     closeAiSidePanel();
+    if (window.innerWidth <= 900) switchArenaPane('studio');
   }
 
   function copyCurrentSolution(btn) {
@@ -2645,13 +3091,13 @@ CHAT_HTML_CONTENT = r"""<!DOCTYPE html>
     let tablesDiffHtml = '';
     if (data.user_data && data.expected_data) {
       tablesDiffHtml = `
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; margin-top: 0.75rem;">
+        <div class="console-diff-grid">
           <div>
-            <div style="font-weight: 700; color: var(--accent); margin-bottom: 0.35rem;">Your Output (${data.user_data.length} rows):</div>
+            <div style="font-weight: 700; color: var(--accent); margin-bottom: 0.35rem; font-size: 0.82rem;">Your Output (${data.user_data.length} rows):</div>
             ${renderMiniTable(data.user_columns, data.user_data)}
           </div>
           <div>
-            <div style="font-weight: 700; color: var(--success); margin-bottom: 0.35rem;">Expected Output (${data.expected_data.length} rows):</div>
+            <div style="font-weight: 700; color: var(--success); margin-bottom: 0.35rem; font-size: 0.82rem;">Expected Output (${data.expected_data.length} rows):</div>
             ${renderMiniTable(data.expected_columns, data.expected_data)}
           </div>
         </div>
@@ -2669,11 +3115,11 @@ CHAT_HTML_CONTENT = r"""<!DOCTYPE html>
 
     consoleEl.innerHTML = `
       <div>
-        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.5rem;">
-          <span class="${statusClass}" style="font-size: 1rem;">${icon} ${data.status}</span>
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.5rem; gap: 0.5rem; flex-wrap: wrap;">
+          <span class="${statusClass}" style="font-size: 0.95rem;">${icon} ${data.status}</span>
           <span style="font-size: 0.75rem; color: var(--text-dim);">Latency: ${data.execution_time_ms}ms</span>
         </div>
-        <div style="color: var(--text-muted); font-size: 0.86rem; margin-bottom: 0.5rem;">${escapeHtml(data.message)}</div>
+        <div style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 0.5rem;">${escapeHtml(data.message)}</div>
         ${data.error ? `<div style="background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.3); padding: 0.6rem; border-radius: 6px; color: #fca5a5; font-family: monospace; font-size: 0.8rem; word-break: break-word;">${escapeHtml(data.error)}</div>` : ''}
         ${askAiErrorBtn}
         ${tablesDiffHtml}
