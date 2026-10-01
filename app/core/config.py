@@ -37,7 +37,7 @@ class Settings(BaseSettings):
     # Connection Pool Settings
     DB_POOL_MIN_CONN: int = Field(default=2, description="Minimum pool connections")
     DB_POOL_MAX_CONN: int = Field(default=10, description="Maximum pool connections")
-    DB_STATEMENT_TIMEOUT_MS: int = Field(default=5000, description="Read-only query timeout in ms")
+    DB_STATEMENT_TIMEOUT_MS: int = Field(default=20000, description="Read-only query timeout in ms")
     SCHEMA_CACHE_TTL_SECONDS: int = Field(default=300, description="Schema introspection cache TTL")
 
     # Query Execution Limits

@@ -139,13 +139,15 @@ class ClarificationService:
                 options=sorted(tables),
             )
 
-        # If multiple unrelated tables are mentioned ambiguously
+        # If multiple unrelated tables are mentioned ambiguously (e.g. "compare customers and products")
         if len(matched_tables) > 1 and len(set(matched_tables)) > 1:
-            return ClarificationResult(
-                is_ambiguous=True,
-                clarification_question="Your query references multiple entities. Which primary table did you want?",
-                options=sorted(matched_tables),
-            )
+            compare_words = ["compare", "versus", "vs", "difference between"]
+            if any(re.search(rf"\b{re.escape(w)}\b", prompt_clean.lower()) for w in compare_words):
+                return ClarificationResult(
+                    is_ambiguous=True,
+                    clarification_question="Your query references multiple entities. Which primary table did you want?",
+                    options=sorted(matched_tables),
+                )
 
         return ClarificationResult(is_ambiguous=False)
 

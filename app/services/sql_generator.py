@@ -48,6 +48,186 @@ class SqlGeneratorService:
         return True
 
     @classmethod
+    def is_llm_active(cls) -> bool:
+        """Check if an active, valid LLM API key is configured."""
+        return cls._is_valid_api_key(settings.active_llm_api_key)
+
+    @classmethod
+    def process_query_with_llm(
+        cls, prompt: str, schema: dict[str, list[str]]
+    ) -> dict | None:
+        """
+        Process any user query using the configured LLM provider.
+        Returns a structured dict with:
+          - {"type": "clarification_needed", "question": "...", "options": [...]}
+          - {"type": "general_response", "explanation": "..."}
+          - {"type": "sql", "sql": "...", "layman_explanation": "...", "time_efficiency": "...", "memory_efficiency": "..."}
+        or None if LLM is unavailable or fails.
+        """
+        api_key = settings.active_llm_api_key
+        if not cls._is_valid_api_key(api_key):
+            return None
+
+        try:
+            from openai import OpenAI
+
+            client = OpenAI(
+                api_key=api_key,
+                base_url=settings.LLM_BASE_URL,
+            )
+
+            schema_lines = []
+            for table, cols in schema.items():
+                schema_lines.append(f"Table: {table} (Columns: {', '.join(cols)})")
+            schema_context = "\n".join(schema_lines)
+            tables_list = list(schema.keys())
+
+            system_prompt = (
+                "You are an empathetic, world-class SQL mentor and database architect for PostgreSQL.\n"
+                f"Database Schema:\n{schema_context}\n\n"
+                "Your task is to analyze the user's prompt and respond with JSON matching EXACTLY ONE of these 3 types:\n\n"
+                "1. Ambiguous / No target entity specified:\n"
+                "If the user request does NOT specify which table or entity to query (for example: 'show me everything', 'show top 5' with no table mentioned, 'give me data', or 'compare customers and products'):\n"
+                "{\n"
+                '  "type": "clarification_needed",\n'
+                '  "question": "Which table would you like to query?",\n'
+                f'  "options": {json.dumps(tables_list)}\n'
+                "}\n\n"
+                "2. Conceptual / General questions:\n"
+                "If the user is asking a conceptual SQL question, greetings, interview practice questions, explanations, or general database concepts (e.g. 'what is a join in SQL', 'explain where vs having', 'give 10 interview questions', 'hello'):\n"
+                "{\n"
+                '  "type": "general_response",\n'
+                '  "explanation": "Detailed explanation using simple layman analogies, plus time & memory efficiency advice."\n'
+                "}\n\n"
+                "3. Data queries / SQL generation:\n"
+                "If the user requests data from one or more tables (for example: 'show customers', 'show top 5 from customers', 'top 5 orders', 'give me customer details who have order something for last 3 consecutive monts', joins, filters, aggregates, CTEs):\n"
+                "{\n"
+                '  "type": "sql",\n'
+                '  "sql": "SELECT ... LIMIT 10;",\n'
+                '  "layman_explanation": "Explanation using simple everyday analogies.",\n'
+                '  "time_efficiency": "Time/speed optimization tip.",\n'
+                '  "memory_efficiency": "Memory optimization tip."\n'
+                "}\n\n"
+                "Rules:\n"
+                "- Output valid JSON ONLY. No markdown or conversational text outside the JSON object.\n"
+                "- For SQL: Must be strictly PostgreSQL read-only SELECT or WITH statement.\n"
+                "- If the prompt specifies a table (e.g. 'show top 5 from customers' or 'show customers'), generate the SELECT query for that table.\n"
+                "- If the prompt specifies a limit (e.g. 'top 5'), reflect that limit in the query (e.g. LIMIT 5).\n"
+                "- Use PostgreSQL syntax and functions (e.g. CURRENT_DATE, INTERVAL, DATE_TRUNC, EXTRACT), NOT MySQL or SQL Server functions.\n"
+                "- Performance: On queries with date filters (like 'last 3 months'), always filter early with a WHERE clause before GROUP BY or JOIN (e.g. WHERE order_date >= (SELECT MAX(order_date) - INTERVAL '3 months' FROM orders) or WHERE order_date >= CURRENT_DATE - INTERVAL '3 months') to avoid scanning millions of rows.\n"
+                f"- Include a LIMIT not exceeding {settings.MAX_QUERY_LIMIT}.\n"
+            )
+
+            for token_limit in [1024, 700]:
+                try:
+                    response = client.chat.completions.create(
+                        model=settings.active_llm_model,
+                        messages=[
+                            {"role": "system", "content": system_prompt},
+                            {"role": "user", "content": prompt},
+                        ],
+                        temperature=0.0,
+                        max_tokens=token_limit,
+                    )
+                    content = (response.choices[0].message.content or "").strip()
+                    json_match = re.search(r"\{[\s\S]*\}", content)
+                    if json_match:
+                        data = json.loads(json_match.group(0))
+                        res_type = data.get("type")
+                        if res_type == "sql" and data.get("sql"):
+                            data["sql"] = cls._clean_sql(data["sql"])
+                            return data
+                        elif res_type in ("general_response", "clarification_needed"):
+                            return data
+                        elif data.get("sql"):
+                            data["type"] = "sql"
+                            data["sql"] = cls._clean_sql(data["sql"])
+                            return data
+                        elif data.get("explanation"):
+                            data["type"] = "general_response"
+                            return data
+                except Exception as inner_exc:
+                    if "rate_limit" in str(inner_exc).lower() or "429" in str(inner_exc):
+                        logger.warning(f"Rate limit in process_query_with_llm: {inner_exc}. Retrying.")
+                        continue
+                    raise inner_exc
+
+        except Exception as exc:
+            logger.warning(
+                f"LLM query processing with {settings.LLM_PROVIDER} ({settings.active_llm_model}) encountered an error: {exc}. "
+                "Falling back to rule-based engine."
+            )
+
+        return None
+
+    @classmethod
+    def fix_sql_with_llm(
+        cls, prompt: str, schema: dict[str, list[str]], failed_sql: str, error_msg: str
+    ) -> tuple[str | None, str | None, str | None, str | None]:
+        """Self-heal an executed SQL query using the exact error message from PostgreSQL."""
+        api_key = settings.active_llm_api_key
+        if not cls._is_valid_api_key(api_key):
+            return None, None, None, None
+
+        try:
+            from openai import OpenAI
+
+            client = OpenAI(
+                api_key=api_key,
+                base_url=settings.LLM_BASE_URL,
+            )
+
+            schema_lines = []
+            for table, cols in schema.items():
+                schema_lines.append(f"Table: {table} (Columns: {', '.join(cols)})")
+            schema_context = "\n".join(schema_lines)
+
+            system_prompt = (
+                "You are fixing a PostgreSQL query that produced an execution error.\n"
+                f"Database Schema:\n{schema_context}\n\n"
+                f"User Request: {prompt}\n"
+                f"Failed SQL: {failed_sql}\n"
+                f"PostgreSQL Error: {error_msg}\n\n"
+                "Fix the SQL query so that it executes successfully in PostgreSQL.\n"
+                "Rules:\n"
+                "- Output valid JSON only.\n"
+                "- Must be strictly PostgreSQL syntax (e.g. CURRENT_DATE, INTERVAL, DATE_TRUNC, EXTRACT). NEVER use SQL Server (DATEADD, GETDATE) or MySQL (CURDATE, DATE_SUB) syntax.\n"
+                "- If fixing a timeout error on large tables, add a WHERE filter (e.g. on order_date) to reduce scanned rows before grouping.\n"
+                "{\n"
+                '  "sql": "SELECT ... LIMIT 10;",\n'
+                '  "layman_explanation": "...",\n'
+                '  "time_efficiency": "...",\n'
+                '  "memory_efficiency": "..."\n'
+                "}"
+            )
+
+            res = client.chat.completions.create(
+                model=settings.active_llm_model,
+                messages=[
+                    {"role": "system", "content": system_prompt},
+                    {"role": "user", "content": "Please output the corrected JSON now."},
+                ],
+                temperature=0.0,
+                max_tokens=700,
+            )
+            content = (res.choices[0].message.content or "").strip()
+            json_match = re.search(r"\{[\s\S]*\}", content)
+            if json_match:
+                data = json.loads(json_match.group(0))
+                sql = data.get("sql")
+                if sql:
+                    return (
+                        cls._clean_sql(sql),
+                        data.get("layman_explanation"),
+                        data.get("time_efficiency"),
+                        data.get("memory_efficiency"),
+                    )
+        except Exception as exc:
+            logger.warning(f"fix_sql_with_llm error: {exc}")
+
+        return None, None, None, None
+
+    @classmethod
     def _generate_with_llm(
         cls, prompt: str, schema: dict[str, list[str]]
     ) -> tuple[str | None, str | None, str | None, str | None]:
