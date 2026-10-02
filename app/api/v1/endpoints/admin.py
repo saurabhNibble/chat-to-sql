@@ -22,9 +22,19 @@ VALID_EXTENSIONS = (".csv", ".xlsx", ".xls", ".xlsm")
 
 
 def is_valid_dataset_file(filename: str, content: bytes) -> bool:
-    if any(filename.lower().endswith(ext) for ext in VALID_EXTENSIONS):
+    fn = filename.lower()
+    if any(fn.endswith(ext) for ext in VALID_EXTENSIONS):
         return True
-    return is_excel_file(filename, content)
+    if is_excel_file(filename, content):
+        return True
+    # Fallback: check if content looks like delimited text/csv
+    try:
+        sample = content[:4096].decode("utf-8", errors="ignore")
+        if any(sep in sample for sep in (",", ";", "\t", "|")):
+            return True
+    except Exception:
+        pass
+    return False
 
 
 @router.post(
