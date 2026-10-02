@@ -2885,12 +2885,12 @@ CHAT_HTML_CONTENT = r"""<!DOCTYPE html>
   <!-- Chrome "Ask Gemini"-Style AI Side Panel -->
   <div class="side-panel-backdrop" id="side-panel-backdrop" onclick="closeAiSidePanel()"></div>
 
-<aside class="ai-side-panel" id="ai-side-panel" aria-label="Groq AI SQL Assistant">
+<aside class="ai-side-panel" id="ai-side-panel" aria-label="Gemini AI SQL Assistant">
   <div class="side-panel-header">
     <div class="ai-panel-title-group">
       <div class="ai-sparkle-icon">✨</div>
       <div>
-        <div class="ai-panel-title">Groq AI Assistant</div>
+        <div class="ai-panel-title">Gemini AI Assistant</div>
         <div class="ai-panel-subtitle">Live SQL Editor Monitoring & Solution Mentor</div>
       </div>
     </div>
@@ -2907,7 +2907,7 @@ CHAT_HTML_CONTENT = r"""<!DOCTYPE html>
   </div>
 
   <div class="side-panel-body" id="ai-panel-content">
-    <!-- Populated dynamically by Groq AI -->
+    <!-- Populated dynamically by Gemini AI -->
   </div>
 </aside>
 
@@ -3879,7 +3879,7 @@ CHAT_HTML_CONTENT = r"""<!DOCTYPE html>
       <div class="ai-loading-spinner">
         <div class="ai-pulse-dot"></div>
         <div>
-          <strong style="color: var(--text-main);">Groq AI is analyzing your SQL code...</strong>
+          <strong style="color: var(--text-main);">Gemini AI is analyzing your SQL code...</strong>
           <div style="font-size: 0.78rem; color: var(--text-dim); margin-top: 0.35rem;">Monitoring editor clauses, filter conditions, and potential pitfalls</div>
         </div>
       </div>
@@ -3897,7 +3897,7 @@ CHAT_HTML_CONTENT = r"""<!DOCTYPE html>
       });
 
       if (!res.ok) {
-        throw new Error('Groq AI hint service unavailable');
+        throw new Error('Gemini AI hint service unavailable');
       }
 
       const data = await res.json();
@@ -3945,7 +3945,7 @@ CHAT_HTML_CONTENT = r"""<!DOCTYPE html>
       </div>
 
       <button class="btn-studio-action" style="width: 100%; justify-content: center; padding: 0.6rem; font-weight: 600;" onclick="loadAiHint()">
-        🔄 Re-analyze Editor with Groq AI
+        🔄 Re-analyze Editor with Gemini AI
       </button>
     `;
   }
@@ -3959,7 +3959,7 @@ CHAT_HTML_CONTENT = r"""<!DOCTYPE html>
       <div class="ai-loading-spinner">
         <div class="ai-pulse-dot"></div>
         <div>
-          <strong style="color: var(--text-main);">Groq AI is preparing the solution walkthrough...</strong>
+          <strong style="color: var(--text-main);">Gemini AI is preparing the solution walkthrough...</strong>
           <div style="font-size: 0.78rem; color: var(--text-dim); margin-top: 0.35rem;">Structuring optimal PostgreSQL syntax and efficiency breakdown</div>
         </div>
       </div>
@@ -3976,7 +3976,7 @@ CHAT_HTML_CONTENT = r"""<!DOCTYPE html>
       });
 
       if (!res.ok) {
-        throw new Error('Groq AI solution service unavailable');
+        throw new Error('Gemini AI solution service unavailable');
       }
 
       const data = await res.json();
@@ -4080,7 +4080,7 @@ CHAT_HTML_CONTENT = r"""<!DOCTYPE html>
     if (data.status === 'Runtime Error' || data.status === 'Wrong Answer') {
       askAiErrorBtn = `
         <button class="btn-ask-ai-error" onclick="openAiSidePanel('hint', true)">
-          ✨ Ask Groq AI to Diagnose & Fix This Error ➔
+          ✨ Ask Gemini AI to Diagnose & Fix This Error ➔
         </button>
       `;
     }

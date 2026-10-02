@@ -76,7 +76,7 @@ class ClarificationService:
         if api_key and not api_key.startswith("your_"):
             try:
                 from openai import OpenAI
-                client = OpenAI(api_key=api_key, base_url=settings.LLM_BASE_URL)
+                client = OpenAI(api_key=api_key, base_url=settings.active_llm_base_url)
                 system_prompt = (
                     "You are an intent classifier for a database assistant.\n"
                     f"Available database tables: {', '.join(schema.keys())}.\n\n"

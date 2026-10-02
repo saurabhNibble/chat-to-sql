@@ -73,7 +73,7 @@ class SqlGeneratorService:
 
             client = OpenAI(
                 api_key=api_key,
-                base_url=settings.LLM_BASE_URL,
+                base_url=settings.active_llm_base_url,
             )
 
             schema_lines = []
@@ -174,7 +174,7 @@ class SqlGeneratorService:
 
             client = OpenAI(
                 api_key=api_key,
-                base_url=settings.LLM_BASE_URL,
+                base_url=settings.active_llm_base_url,
             )
 
             schema_lines = []
@@ -244,7 +244,7 @@ class SqlGeneratorService:
 
             client = OpenAI(
                 api_key=api_key,
-                base_url=settings.LLM_BASE_URL,
+                base_url=settings.active_llm_base_url,
             )
 
             schema_lines = []
@@ -419,7 +419,7 @@ class SqlGeneratorService:
 
                 client = OpenAI(
                     api_key=api_key,
-                    base_url=settings.LLM_BASE_URL,
+                    base_url=settings.active_llm_base_url,
                 )
 
                 system_prompt = (

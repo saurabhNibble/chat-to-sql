@@ -33,7 +33,7 @@ chat-to-sql/
 │   │   ├── conversation.py      # Multi-turn chat memory & clarification resolution service
 │   │   ├── csv_ingestion.py     # Schema inference, type detection & PostgreSQL bulk COPY ingestion
 │   │   ├── db_explorer.py       # Multi-database introspection, schema inspector & paginated records
-│   │   ├── sql_generator.py     # Schema-aware SQL generator (Groq/OpenAI LLM + rule-based fallback)
+│   │   ├── sql_generator.py     # Schema-aware SQL generator (Google Gemini/OpenAI LLM + rule-based fallback)
 │   │   ├── sql_validator.py     # AST-level query validation using sqlglot
 │   │   └── query_service.py     # Orchestrator coordinating business workflow
 │   ├── ui/
@@ -162,9 +162,11 @@ SCHEMA_CACHE_TTL_SECONDS=300
 MAX_QUERY_LIMIT=10
 MAX_ALLOWED_LIMIT=100
 
-# Optional LLM Integration
-OPENAI_API_KEY=
-OPENAI_MODEL=gpt-4o-mini
+# Google Gemini LLM Integration (Google AI Studio)
+LLM_PROVIDER=gemini
+LLM_BASE_URL=https://generativelanguage.googleapis.com/v1beta/openai/
+LLM_MODEL=gemini-2.5-flash
+GEMINI_API_KEY=
 ```
 
 ---
