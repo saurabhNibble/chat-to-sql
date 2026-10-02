@@ -1,8 +1,9 @@
 """
-Enterprise-grade CSV to PostgreSQL Ingestion Service.
+Enterprise-grade Data Ingestion Service (CSV & Multi-Sheet Excel).
 
 Implements automated schema inference, identifier sanitization (SQL injection defense),
-database auto-provisioning, and high-performance streaming bulk loading via PostgreSQL COPY.
+multi-sheet Excel extraction, database auto-provisioning, and high-performance streaming
+bulk loading via PostgreSQL native COPY command.
 """
 
 import csv
@@ -38,15 +39,34 @@ SUPPORTED_POSTGRES_TYPES = [
 ]
 
 
+def is_excel_file(filename: str, file_bytes: bytes | None = None) -> bool:
+    """Determine whether a file is an Excel spreadsheet (.xlsx, .xls) by extension or magic header."""
+    fn = filename.lower()
+    if fn.endswith((".xlsx", ".xls", ".xlsm", ".xlsb")):
+        return True
+    if file_bytes and len(file_bytes) >= 4:
+        # PK\x03\x04 is standard ZIP archive header used by modern .xlsx files
+        if file_bytes.startswith(b"PK\x03\x04") or file_bytes.startswith(b"\xd0\xcf\x11\xe0"):
+            return True
+    return False
+
+
 def sanitize_identifier(raw: str, fallback_prefix: str = "col") -> str:
     """
     Sanitize raw column/table headers into safe, idiomatic PostgreSQL snake_case identifiers.
+    Converts camelCase/PascalCase (e.g. carCategories -> car_categories) and handles symbols.
     Guarantees strict prevention against SQL injection in DDL.
     """
     if not raw or not str(raw).strip():
         return f"{fallback_prefix}_1"
 
-    cleaned = str(raw).strip().lower()
+    text = str(raw).strip()
+    # 1. Insert underscore between lowercase/digit and uppercase (carCategories -> car_Categories)
+    s1 = re.sub(r"([a-z0-9])([A-Z])", r"\1_\2", text)
+    # 2. Insert underscore between consecutive uppercase and lowercase (XMLParser -> XML_Parser)
+    s2 = re.sub(r"([A-Z]+)([A-Z][a-z])", r"\1_\2", s1)
+    cleaned = s2.lower()
+
     # Replace non-alphanumeric chars (spaces, hyphens, slashes, brackets) with underscores
     cleaned = re.sub(r"[^a-z0-9_]+", "_", cleaned)
     # Collapse consecutive underscores
@@ -185,55 +205,101 @@ class CsvIngestionService:
         self,
         file_bytes: bytes,
         filename: str,
+        sheet_name: str | None = None,
         sample_size: int = 500,
     ) -> dict[str, Any]:
         """
-        Preview uploaded CSV data:
+        Preview uploaded CSV or multi-sheet Excel data:
+        - Detects format (CSV vs Excel workbook)
+        - Discovers sheets if Excel
         - Suggests sanitized table name
-        - Sanitizes columns
-        - Infers robust PostgreSQL column types
+        - Sanitizes columns & infers robust PostgreSQL column types
         - Returns top 5 sample rows for user confirmation
         """
-        # Try UTF-8 with BOM fallback (Excel CSV compatibility)
-        decoded = None
-        for enc in ("utf-8-sig", "utf-8", "latin1", "cp1252"):
-            try:
-                decoded = file_bytes.decode(enc)
-                break
-            except UnicodeDecodeError:
-                continue
+        is_excel = is_excel_file(filename, file_bytes)
+        sheet_names: list[str] = []
+        active_sheet: str | None = None
 
-        if decoded is None:
-            raise ValueError("Unable to decode CSV file. Please ensure it is saved in UTF-8 format.")
-
-        # Read into pandas for parsing
-        buffer = io.StringIO(decoded)
-        try:
-            # Sniff delimiter
-            sample_chunk = decoded[:4096]
+        if is_excel:
             try:
-                dialect = csv.Sniffer().sniff(sample_chunk)
-                sep = dialect.delimiter
+                excel = pd.ExcelFile(io.BytesIO(file_bytes))
+                sheet_names = list(excel.sheet_names)
+            except Exception as exc:
+                raise ValueError(f"Failed to read Excel workbook: {exc}")
+
+            if not sheet_names:
+                raise ValueError("Excel file contains no readable sheets.")
+
+            target_sheet = sheet_name if (sheet_name and sheet_name in sheet_names) else sheet_names[0]
+            active_sheet = target_sheet
+
+            try:
+                df = pd.read_excel(
+                    excel,
+                    sheet_name=target_sheet,
+                    nrows=sample_size,
+                    dtype=str,
+                    keep_default_na=False,
+                )
+            except Exception as exc:
+                raise ValueError(f"Failed to read sheet '{target_sheet}': {exc}")
+
+            # Suggest table name from sheet name (e.g. carCategories -> car_categories)
+            if len(sheet_names) > 1 or target_sheet.lower() not in ("sheet1", "sheet 1"):
+                suggested_table = sanitize_identifier(target_sheet, fallback_prefix="table")
+            else:
+                raw_base_name = re.sub(r"\.[^.]+$", "", filename)
+                suggested_table = sanitize_identifier(raw_base_name, fallback_prefix="table")
+
+            # Fast row count estimate
+            try:
+                full_sheet = pd.read_excel(excel, sheet_name=target_sheet, usecols=[0], keep_default_na=False)
+                total_rows_est = len(full_sheet)
             except Exception:
-                sep = ","
+                total_rows_est = len(df)
 
-            buffer.seek(0)
-            df = pd.read_csv(
-                buffer,
-                sep=sep,
-                nrows=sample_size,
-                dtype=str,
-                keep_default_na=False,
-            )
-        except Exception as exc:
-            raise ValueError(f"Failed to parse CSV file: {exc}")
+        else:
+            # CSV Parsing
+            decoded = None
+            for enc in ("utf-8-sig", "utf-8", "latin1", "cp1252"):
+                try:
+                    decoded = file_bytes.decode(enc)
+                    break
+                except UnicodeDecodeError:
+                    continue
+
+            if decoded is None:
+                raise ValueError("Unable to decode CSV file. Please ensure it is saved in UTF-8 format.")
+
+            buffer = io.StringIO(decoded)
+            try:
+                # Sniff delimiter
+                sample_chunk = decoded[:4096]
+                try:
+                    dialect = csv.Sniffer().sniff(sample_chunk)
+                    sep = dialect.delimiter
+                except Exception:
+                    sep = ","
+
+                buffer.seek(0)
+                df = pd.read_csv(
+                    buffer,
+                    sep=sep,
+                    nrows=sample_size,
+                    dtype=str,
+                    keep_default_na=False,
+                )
+            except Exception as exc:
+                raise ValueError(f"Failed to parse CSV file: {exc}")
+
+            raw_base_name = re.sub(r"\.[^.]+$", "", filename)
+            suggested_table = sanitize_identifier(raw_base_name, fallback_prefix="table")
+            total_lines = decoded.count("\n")
+            total_rows_est = max(0, total_lines - 1)
 
         if df.empty or len(df.columns) == 0:
-            raise ValueError("The uploaded CSV file is empty or has no columns.")
-
-        # Suggest table name from filename
-        raw_base_name = re.sub(r"\.[^.]+$", "", filename)
-        suggested_table = sanitize_identifier(raw_base_name, fallback_prefix="table")
+            msg = f"Sheet '{active_sheet}' is empty." if is_excel else "The uploaded file is empty or has no columns."
+            raise ValueError(msg)
 
         # Sanitize and deduplicate column names
         raw_cols = list(df.columns)
@@ -253,13 +319,8 @@ class CsvIngestionService:
 
         # Generate preview rows (up to 5)
         preview_df = df.head(5).copy()
-        # Rename preview columns to sanitized names
         preview_df.columns = unique_cols
         sample_rows = preview_df.to_dict(orient="records")
-
-        # Count total rows approximately from the decoded string
-        total_lines = decoded.count("\n")
-        total_rows_est = max(0, total_lines - 1)
 
         return {
             "suggested_table_name": suggested_table,
@@ -268,6 +329,9 @@ class CsvIngestionService:
             "columns": column_meta,
             "sample_rows": sample_rows,
             "supported_types": SUPPORTED_POSTGRES_TYPES,
+            "is_excel": is_excel,
+            "sheet_names": sheet_names,
+            "active_sheet": active_sheet,
         }
 
     def _get_target_connection(self, db_name: str) -> psycopg2.extensions.connection:
@@ -317,15 +381,18 @@ class CsvIngestionService:
         db_name: str | None = None,
         mode: str = "replace",  # 'replace', 'fail', 'append'
         custom_column_types: dict[str, str] | None = None,
+        sheet_name: str | None = None,
+        filename: str = "",
     ) -> dict[str, Any]:
         """
-        Full industry-standard CSV to PostgreSQL ingestion pipeline:
+        Full industry-standard data to PostgreSQL ingestion pipeline (CSV & Excel):
         1. Ensures target database exists.
-        2. Sanitizes table & column names.
-        3. Generates and executes DDL (CREATE TABLE).
-        4. Streams data using PostgreSQL COPY command.
-        5. Validates inserted row count.
-        6. Invalidates schema cache so table is immediately queryable.
+        2. Reads CSV or specific Excel sheet into DataFrame.
+        3. Sanitizes table & column names.
+        4. Generates and executes DDL (CREATE TABLE).
+        5. Streams data using PostgreSQL native COPY command.
+        6. Validates inserted row count.
+        7. Invalidates schema cache so table is immediately queryable.
         """
         target_db = clean_database_name(db_name, self.settings.DB_NAME)
         clean_table = sanitize_identifier(table_name, fallback_prefix="table")
@@ -333,35 +400,43 @@ class CsvIngestionService:
         # 1. Ensure target DB exists
         self.ensure_database_exists(target_db)
 
-        # 2. Decode CSV
-        decoded = None
-        for enc in ("utf-8-sig", "utf-8", "latin1", "cp1252"):
+        # 2. Load DataFrame from CSV or Excel
+        is_excel = is_excel_file(filename, file_bytes)
+        if is_excel:
             try:
-                decoded = file_bytes.decode(enc)
-                break
-            except UnicodeDecodeError:
-                continue
+                excel = pd.ExcelFile(io.BytesIO(file_bytes))
+                target_sheet = sheet_name or excel.sheet_names[0]
+                df = pd.read_excel(excel, sheet_name=target_sheet, dtype=str, keep_default_na=False)
+            except Exception as exc:
+                raise ValueError(f"Failed to read Excel data: {exc}")
+        else:
+            decoded = None
+            for enc in ("utf-8-sig", "utf-8", "latin1", "cp1252"):
+                try:
+                    decoded = file_bytes.decode(enc)
+                    break
+                except UnicodeDecodeError:
+                    continue
 
-        if decoded is None:
-            raise ValueError("Unable to decode CSV file into valid text.")
+            if decoded is None:
+                raise ValueError("Unable to decode CSV file into valid text.")
 
-        # Sniff delimiter
-        sample_chunk = decoded[:4096]
-        try:
-            dialect = csv.Sniffer().sniff(sample_chunk)
-            sep = dialect.delimiter
-        except Exception:
-            sep = ","
+            sample_chunk = decoded[:4096]
+            try:
+                dialect = csv.Sniffer().sniff(sample_chunk)
+                sep = dialect.delimiter
+            except Exception:
+                sep = ","
 
-        df = pd.read_csv(
-            io.StringIO(decoded),
-            sep=sep,
-            dtype=str,
-            keep_default_na=False,
-        )
+            df = pd.read_csv(
+                io.StringIO(decoded),
+                sep=sep,
+                dtype=str,
+                keep_default_na=False,
+            )
 
         if df.empty or len(df.columns) == 0:
-            raise ValueError("CSV contains no data rows or columns.")
+            raise ValueError("Dataset contains no data rows or columns.")
 
         # 3. Resolve columns and types
         raw_cols = list(df.columns)
@@ -371,7 +446,6 @@ class CsvIngestionService:
         # Inferred / custom type map
         col_type_map: dict[str, str] = {}
         for orig, clean in zip(raw_cols, unique_cols, strict=False):
-            # Check if user provided an override
             if custom_column_types and clean in custom_column_types:
                 chosen_type = custom_column_types[clean].upper()
                 if chosen_type not in SUPPORTED_POSTGRES_TYPES:
@@ -380,7 +454,6 @@ class CsvIngestionService:
             else:
                 col_type_map[clean] = infer_column_type(df[orig].tolist())
 
-        # Rename dataframe columns to sanitized identifiers
         df.columns = unique_cols
 
         # Connect to target DB
@@ -404,7 +477,6 @@ class CsvIngestionService:
                     if mode == "replace" and table_exists:
                         cur.execute(sql.SQL("DROP TABLE IF EXISTS {} CASCADE;").format(sql.Identifier(clean_table)))
 
-                    # Build DDL: CREATE TABLE "clean_table" ("col1" TYPE1, "col2" TYPE2, ...)
                     col_definitions = [
                         sql.SQL("{} {}").format(sql.Identifier(col), sql.SQL(col_type_map[col]))
                         for col in unique_cols
@@ -417,12 +489,8 @@ class CsvIngestionService:
                     logger.info(f"Created table '{clean_table}' in '{target_db}' with {len(unique_cols)} columns.")
 
                 # 5. Stream data using PostgreSQL COPY
-                # Prepare CSV buffer with standardized format and NULL representation
-                # Replace empty strings or null variants with None so pandas exports them as null
                 formatted_df = df.copy()
                 for col in unique_cols:
-                    t = col_type_map[col]
-                    # Clean empty values to empty string
                     formatted_df[col] = formatted_df[col].apply(
                         lambda v: "" if is_null_val(v) else str(v).strip()
                     )
@@ -438,15 +506,12 @@ class CsvIngestionService:
                 )
                 csv_buffer.seek(0)
 
-                # Execute COPY command
                 columns_identifiers = sql.SQL(", ").join([sql.Identifier(c) for c in unique_cols])
                 copy_sql = sql.SQL(
                     "COPY {} ({}) FROM STDIN WITH (FORMAT CSV, HEADER FALSE, NULL '', ESCAPE '\\');"
                 ).format(sql.Identifier(clean_table), columns_identifiers)
 
                 cur.copy_expert(copy_sql.as_string(conn), csv_buffer)
-
-                # Commit transaction atomically
                 conn.commit()
 
                 # Verify count
@@ -468,6 +533,7 @@ class CsvIngestionService:
                 "database": target_db,
                 "table": clean_table,
                 "rows_inserted": total_rows,
+                "sheet_name": sheet_name,
                 "columns": [
                     {"name": col, "type": col_type_map[col]}
                     for col in unique_cols
@@ -476,10 +542,55 @@ class CsvIngestionService:
 
         except Exception as exc:
             conn.rollback()
-            logger.error(f"Failed to ingest CSV into PostgreSQL: {exc}")
+            logger.error(f"Failed to ingest dataset into PostgreSQL: {exc}")
             raise
         finally:
             conn.close()
+
+    def ingest_all_sheets(
+        self,
+        file_bytes: bytes,
+        filename: str,
+        db_name: str | None = None,
+        mode: str = "replace",
+    ) -> dict[str, Any]:
+        """
+        Ingest all sheets from an Excel workbook into PostgreSQL as relational tables.
+        """
+        target_db = clean_database_name(db_name, self.settings.DB_NAME)
+        self.ensure_database_exists(target_db)
+
+        try:
+            excel = pd.ExcelFile(io.BytesIO(file_bytes))
+            sheet_names = list(excel.sheet_names)
+        except Exception as exc:
+            raise ValueError(f"Failed to read Excel workbook: {exc}")
+
+        if not sheet_names:
+            raise ValueError("Workbook contains no readable sheets.")
+
+        results = []
+        total_rows = 0
+
+        for sheet in sheet_names:
+            table_name = sanitize_identifier(sheet, fallback_prefix="table")
+            res = self.ingest_csv(
+                file_bytes=file_bytes,
+                table_name=table_name,
+                db_name=target_db,
+                mode=mode,
+                sheet_name=sheet,
+                filename=filename,
+            )
+            results.append(res)
+            total_rows += res["rows_inserted"]
+
+        return {
+            "status": "success",
+            "database": target_db,
+            "tables": results,
+            "total_rows_inserted": total_rows,
+        }
 
 
 csv_ingestion_service = CsvIngestionService()

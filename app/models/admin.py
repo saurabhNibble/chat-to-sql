@@ -15,6 +15,9 @@ class CsvPreviewResponse(BaseModel):
     columns: list[ColumnMeta]
     sample_rows: list[dict[str, Any]]
     supported_types: list[str]
+    is_excel: bool = False
+    sheet_names: list[str] = Field(default_factory=list)
+    active_sheet: str | None = None
 
 
 class CsvImportResponse(BaseModel):
@@ -23,6 +26,14 @@ class CsvImportResponse(BaseModel):
     table: str
     rows_inserted: int
     columns: list[dict[str, str]]
+    sheet_name: str | None = None
+
+
+class MultiSheetImportResponse(BaseModel):
+    status: str
+    database: str
+    tables: list[CsvImportResponse]
+    total_rows_inserted: int
 
 
 class TableInfo(BaseModel):

@@ -110,3 +110,74 @@ def test_admin_list_tables_and_databases(client: TestClient):
     assert "columns" in tables[0]
     assert "row_count" in tables[0]
 
+
+def test_admin_excel_multi_sheet_flow(client: TestClient):
+    import pandas as pd
+
+    # Generate in-memory Excel workbook with 2 sheets
+    buf = io.BytesIO()
+    with pd.ExcelWriter(buf, engine="openpyxl") as writer:
+        df_cat = pd.DataFrame([
+            {"category_id": 1, "category_name": "SUV", "description": "Sport Utility Vehicle"},
+            {"category_id": 2, "category_name": "Sedan", "description": "4-door passenger car"},
+            {"category_id": 3, "category_name": "Electric", "description": "Battery electric vehicle"},
+        ])
+        df_cat.to_excel(writer, sheet_name="carCategories", index=False)
+
+        df_mod = pd.DataFrame([
+            {"model_id": 101, "model_name": "Tesla Model Y", "category_id": 3, "price": 52990.00, "in_stock": True},
+            {"model_id": 102, "model_name": "Toyota RAV4", "category_id": 1, "price": 31500.50, "in_stock": True},
+            {"model_id": 103, "model_name": "Honda Civic", "category_id": 2, "price": 24950.00, "in_stock": False},
+        ])
+        df_mod.to_excel(writer, sheet_name="carModels", index=False)
+
+    excel_bytes = buf.getvalue()
+
+    # 1. Preview default sheet (carCategories)
+    files = {"file": ("carDB.xlsx", io.BytesIO(excel_bytes), "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")}
+    res_preview = client.post("/api/v1/admin/preview-csv", files=files)
+    assert res_preview.status_code == 200, res_preview.text
+    prev_data = res_preview.json()
+    assert prev_data["is_excel"] is True
+    assert prev_data["sheet_names"] == ["carCategories", "carModels"]
+    assert prev_data["active_sheet"] == "carCategories"
+    assert prev_data["suggested_table_name"] == "car_categories"
+
+    # 2. Preview second sheet (carModels)
+    files2 = {"file": ("carDB.xlsx", io.BytesIO(excel_bytes), "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")}
+    res_preview2 = client.post("/api/v1/admin/preview-csv", files=files2, data={"sheet_name": "carModels"})
+    assert res_preview2.status_code == 200
+    prev_data2 = res_preview2.json()
+    assert prev_data2["active_sheet"] == "carModels"
+    assert prev_data2["suggested_table_name"] == "car_models"
+
+    # 3. Batch import all sheets into PostgreSQL
+    try:
+        files3 = {"file": ("carDB.xlsx", io.BytesIO(excel_bytes), "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")}
+        res_import = client.post("/api/v1/admin/import-all-sheets", files=files3, data={"mode": "replace"})
+        assert res_import.status_code == 200, res_import.text
+        import_data = res_import.json()
+        assert import_data["status"] == "success"
+        assert import_data["total_rows_inserted"] == 6
+        assert len(import_data["tables"]) == 2
+
+        # Verify tables in database
+        tables_res = client.get("/api/v1/admin/tables")
+        tables = {t["table_name"]: t for t in tables_res.json()}
+        assert "car_categories" in tables
+        assert "car_models" in tables
+        assert tables["car_categories"]["row_count"] == 3
+        assert tables["car_models"]["row_count"] == 3
+
+    finally:
+        # Clean up created tables
+        try:
+            with get_db_connection() as conn:
+                with conn.cursor() as cur:
+                    cur.execute('DROP TABLE IF EXISTS "car_models" CASCADE;')
+                    cur.execute('DROP TABLE IF EXISTS "car_categories" CASCADE;')
+                conn.commit()
+        except Exception:
+            pass
+
+

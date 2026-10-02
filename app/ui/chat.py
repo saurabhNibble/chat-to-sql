@@ -2255,20 +2255,20 @@ CHAT_HTML_CONTENT = r"""<!DOCTYPE html>
           </div>
         </div>
 
-        <!-- Card 2: CSV Upload & File Dropzone -->
+        <!-- Card 2: CSV / Excel Upload & File Dropzone -->
         <div class="admin-card">
-          <div class="admin-card-title">📁 2. Upload CSV Dataset</div>
+          <div class="admin-card-title">📁 2. Upload CSV or Excel Dataset</div>
           
           <div class="admin-dropzone" id="admin-dropzone" onclick="document.getElementById('admin-csv-file').click()" ondragover="handleAdminDragOver(event)" ondragleave="handleAdminDragLeave(event)" ondrop="handleAdminDrop(event)">
             <div class="admin-dropzone-icon">📄</div>
-            <div class="admin-dropzone-text">Click or drag & drop a .csv file here</div>
-            <div class="admin-dropzone-subtext">Automatic type inference (integers, floats, dates, timestamps, text, booleans)</div>
-            <input type="file" id="admin-csv-file" accept=".csv" style="display: none;" onchange="handleAdminFileSelected(event)">
+            <div class="admin-dropzone-text">Click or drag & drop a .csv or .xlsx (Excel) file here</div>
+            <div class="admin-dropzone-subtext">Automatic type inference · Supports multi-sheet workbooks (e.g. carCategories, carModels)</div>
+            <input type="file" id="admin-csv-file" accept=".csv, .xlsx, .xls" style="display: none;" onchange="handleAdminFileSelected(event)">
           </div>
 
           <div class="admin-file-badge" id="admin-file-badge">
             <div style="display: flex; align-items: center; gap: 0.5rem;">
-              <span>📊</span>
+              <span id="badge-file-icon">📊</span>
               <div>
                 <strong id="badge-filename">filename.csv</strong>
                 <div style="font-size: 0.72rem; color: var(--text-muted);" id="badge-filesize">0 KB</div>
@@ -2286,6 +2286,12 @@ CHAT_HTML_CONTENT = r"""<!DOCTYPE html>
           <div style="font-size: 0.8rem; color: var(--accent);" id="preview-metrics">Detected 0 columns · ~0 rows</div>
         </div>
 
+        <!-- Excel Multi-Sheet Switcher Bar -->
+        <div id="excel-sheets-bar" style="display: none; align-items: center; gap: 0.6rem; flex-wrap: wrap; background: var(--bg-tertiary); padding: 0.6rem 0.85rem; border-radius: 8px; border: 1px solid var(--border-color);">
+          <span style="font-size: 0.76rem; font-weight: 700; color: var(--text-dim); text-transform: uppercase;">Sheets in Workbook:</span>
+          <div id="excel-sheets-pills" style="display: flex; gap: 0.4rem; flex-wrap: wrap;"></div>
+        </div>
+
         <div style="font-size: 0.78rem; color: var(--text-muted);">
           The engine automatically inferred the PostgreSQL column types below. You can adjust any type dropdown before running the ingestion:
         </div>
@@ -2294,7 +2300,7 @@ CHAT_HTML_CONTENT = r"""<!DOCTYPE html>
           <table class="admin-table">
             <thead>
               <tr>
-                <th>Original CSV Header</th>
+                <th>Original Header</th>
                 <th>PostgreSQL Column</th>
                 <th>Inferred Type (Click to override)</th>
                 <th>Sample Value (Row 1)</th>
@@ -2317,9 +2323,14 @@ CHAT_HTML_CONTENT = r"""<!DOCTYPE html>
         </div>
 
         <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1rem; margin-top: 0.5rem;">
-          <button class="btn-ingest-run" id="btn-run-ingest" onclick="executeCsvIngestion()">
-            <span>🚀</span> Stream Data into PostgreSQL
-          </button>
+          <div style="display: flex; gap: 0.75rem; flex-wrap: wrap;">
+            <button class="btn-ingest-run" id="btn-run-ingest" onclick="executeCsvIngestion()">
+              <span>🚀</span> Stream This Sheet into PostgreSQL
+            </button>
+            <button class="btn-ingest-run" id="btn-run-all-sheets" style="display: none; background: linear-gradient(135deg, #059669, #10b981);" onclick="executeAllSheetsIngestion()">
+              <span>📦</span> Ingest ALL Sheets (Multiple Tables)
+            </button>
+          </div>
           <div id="ingest-spinner-msg" style="font-size: 0.82rem; color: var(--text-muted); display: none;">
             ⏳ Ingesting rows into PostgreSQL via streaming COPY...
           </div>
@@ -3649,9 +3660,12 @@ CHAT_HTML_CONTENT = r"""<!DOCTYPE html>
     if (errorAlert) errorAlert.style.display = 'none';
   }
 
-  async function processAdminFile(file) {
-    if (!file.name.toLowerCase().endsWith('.csv')) {
-      alert('Please select a valid CSV file (.csv).');
+  async function processAdminFile(file, sheetName = null) {
+    const fn = file.name.toLowerCase();
+    const isCsv = fn.endsWith('.csv');
+    const isExcel = fn.endsWith('.xlsx') || fn.endsWith('.xls') || fn.endsWith('.xlsm');
+    if (!isCsv && !isExcel) {
+      alert('Please select a valid CSV (.csv) or Excel (.xlsx, .xls) file.');
       return;
     }
     selectedAdminFile = file;
@@ -3660,10 +3674,12 @@ CHAT_HTML_CONTENT = r"""<!DOCTYPE html>
     const badge = document.getElementById('admin-file-badge');
     const badgeName = document.getElementById('badge-filename');
     const badgeSize = document.getElementById('badge-filesize');
+    const badgeIcon = document.getElementById('badge-file-icon');
     if (badge && badgeName && badgeSize) {
       badgeName.textContent = file.name;
       const kb = (file.size / 1024).toFixed(1);
       badgeSize.textContent = `${kb} KB`;
+      if (badgeIcon) badgeIcon.textContent = isExcel ? '📗' : '📊';
       badge.style.display = 'flex';
     }
 
@@ -3676,6 +3692,9 @@ CHAT_HTML_CONTENT = r"""<!DOCTYPE html>
     // Call preview API
     const formData = new FormData();
     formData.append('file', file);
+    if (sheetName) {
+      formData.append('sheet_name', sheetName);
+    }
 
     try {
       const res = await fetch('/api/v1/admin/preview-csv', {
@@ -3685,13 +3704,13 @@ CHAT_HTML_CONTENT = r"""<!DOCTYPE html>
 
       if (!res.ok) {
         const errJson = await res.json().catch(() => ({}));
-        throw new Error(errJson.detail || 'Failed to inspect CSV schema.');
+        throw new Error(errJson.detail || 'Failed to inspect dataset schema.');
       }
 
       adminPreviewData = await res.json();
       renderSchemaPreview(adminPreviewData);
     } catch (err) {
-      console.error('Error previewing CSV:', err);
+      console.error('Error previewing file:', err);
       const errorAlert = document.getElementById('admin-alert-error');
       const errorText = document.getElementById('alert-error-text');
       if (errorAlert && errorText) {
@@ -3703,13 +3722,44 @@ CHAT_HTML_CONTENT = r"""<!DOCTYPE html>
 
   function renderSchemaPreview(data) {
     const tableInput = document.getElementById('admin-table-name');
-    if (tableInput && !tableInput.value) {
+    if (tableInput) {
       tableInput.value = data.suggested_table_name;
     }
 
     const metrics = document.getElementById('preview-metrics');
     if (metrics) {
-      metrics.textContent = `Detected ${data.total_columns} columns · ~${data.estimated_rows.toLocaleString()} rows`;
+      const sheetInfo = data.active_sheet ? ` · Sheet: "${data.active_sheet}"` : '';
+      metrics.textContent = `Detected ${data.total_columns} columns · ~${data.estimated_rows.toLocaleString()} rows${sheetInfo}`;
+    }
+
+    // Multi-sheet bar & Batch Button
+    const sheetsBar = document.getElementById('excel-sheets-bar');
+    const sheetsPills = document.getElementById('excel-sheets-pills');
+    const btnAllSheets = document.getElementById('btn-run-all-sheets');
+
+    if (data.is_excel && data.sheet_names && data.sheet_names.length > 1) {
+      if (sheetsBar && sheetsPills) {
+        sheetsPills.innerHTML = '';
+        data.sheet_names.forEach(sheet => {
+          const btn = document.createElement('button');
+          const isActive = sheet === data.active_sheet;
+          btn.className = 'btn-studio-action';
+          btn.style.cssText = isActive
+            ? 'background: var(--accent); color: #0b0f19; font-weight: 700; border-color: var(--accent);'
+            : 'background: var(--bg-elevated); color: var(--text-muted); border-color: var(--border-color);';
+          btn.textContent = `📄 ${sheet}`;
+          btn.onclick = () => processAdminFile(selectedAdminFile, sheet);
+          sheetsPills.appendChild(btn);
+        });
+        sheetsBar.style.display = 'flex';
+      }
+      if (btnAllSheets) {
+        btnAllSheets.style.display = 'inline-flex';
+        btnAllSheets.innerHTML = `<span>📦</span> Ingest ALL ${data.sheet_names.length} Sheets (Multiple Tables)`;
+      }
+    } else {
+      if (sheetsBar) sheetsBar.style.display = 'none';
+      if (btnAllSheets) btnAllSheets.style.display = 'none';
     }
 
     // Populate Schema Mapping Table
@@ -3765,9 +3815,81 @@ CHAT_HTML_CONTENT = r"""<!DOCTYPE html>
     if (previewCard) previewCard.style.display = 'flex';
   }
 
+  async function executeAllSheetsIngestion() {
+    if (!selectedAdminFile) {
+      alert('Please select an Excel file first.');
+      return;
+    }
+
+    const dbInput = document.getElementById('admin-db-name');
+    const modeRadio = document.querySelector('input[name="admin-mode"]:checked');
+    const dbName = dbInput ? dbInput.value.trim() : 'e-commerce';
+    const mode = modeRadio ? modeRadio.value : 'replace';
+
+    const runBtn = document.getElementById('btn-run-ingest');
+    const btnAllSheets = document.getElementById('btn-run-all-sheets');
+    const spinnerMsg = document.getElementById('ingest-spinner-msg');
+    const successAlert = document.getElementById('admin-alert-success');
+    const errorAlert = document.getElementById('admin-alert-error');
+
+    if (runBtn) runBtn.disabled = true;
+    if (btnAllSheets) btnAllSheets.disabled = true;
+    if (spinnerMsg) {
+      spinnerMsg.textContent = '⏳ Batch streaming all Excel sheets into PostgreSQL tables...';
+      spinnerMsg.style.display = 'block';
+    }
+    if (successAlert) successAlert.style.display = 'none';
+    if (errorAlert) errorAlert.style.display = 'none';
+
+    const formData = new FormData();
+    formData.append('file', selectedAdminFile);
+    formData.append('db_name', dbName);
+    formData.append('mode', mode);
+
+    try {
+      const res = await fetch('/api/v1/admin/import-all-sheets', {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!res.ok) {
+        const errJson = await res.json().catch(() => ({}));
+        throw new Error(errJson.detail || 'Batch ingestion failed.');
+      }
+
+      const result = await res.json();
+      lastIngestedTable = result.tables.length > 0 ? result.tables[0].table : null;
+
+      if (successAlert) {
+        const succText = document.getElementById('alert-success-text');
+        if (succText) {
+          const tableSummaries = result.tables.map(t => `${t.table} (${t.rows_inserted.toLocaleString()} rows)`).join(', ');
+          succText.textContent = `🎉 Batch Ingestion Complete! Successfully created ${result.tables.length} tables [${tableSummaries}] in database "${result.database}" (${result.total_rows_inserted.toLocaleString()} total rows).`;
+        }
+        successAlert.style.display = 'flex';
+      }
+
+      loadAdminTables();
+      if (typeof fetchSchemaOverview === 'function') {
+        fetchSchemaOverview();
+      }
+    } catch (err) {
+      console.error('Batch ingestion error:', err);
+      if (errorAlert) {
+        const errorText = document.getElementById('alert-error-text');
+        if (errorText) errorText.textContent = `❌ ${err.message}`;
+        errorAlert.style.display = 'flex';
+      }
+    } finally {
+      if (runBtn) runBtn.disabled = false;
+      if (btnAllSheets) btnAllSheets.disabled = false;
+      if (spinnerMsg) spinnerMsg.style.display = 'none';
+    }
+  }
+
   async function executeCsvIngestion() {
     if (!selectedAdminFile) {
-      alert('Please select a CSV file first.');
+      alert('Please select a CSV or Excel file first.');
       return;
     }
 
@@ -3794,12 +3916,17 @@ CHAT_HTML_CONTENT = r"""<!DOCTYPE html>
     });
 
     const runBtn = document.getElementById('btn-run-ingest');
+    const btnAllSheets = document.getElementById('btn-run-all-sheets');
     const spinnerMsg = document.getElementById('ingest-spinner-msg');
     const successAlert = document.getElementById('admin-alert-success');
     const errorAlert = document.getElementById('admin-alert-error');
 
     if (runBtn) runBtn.disabled = true;
-    if (spinnerMsg) spinnerMsg.style.display = 'block';
+    if (btnAllSheets) btnAllSheets.disabled = true;
+    if (spinnerMsg) {
+      spinnerMsg.textContent = '⏳ Ingesting rows into PostgreSQL via streaming COPY...';
+      spinnerMsg.style.display = 'block';
+    }
     if (successAlert) successAlert.style.display = 'none';
     if (errorAlert) errorAlert.style.display = 'none';
 
@@ -3809,6 +3936,9 @@ CHAT_HTML_CONTENT = r"""<!DOCTYPE html>
     formData.append('table_name', tableName);
     formData.append('mode', mode);
     formData.append('column_types', JSON.stringify(customTypes));
+    if (adminPreviewData && adminPreviewData.active_sheet) {
+      formData.append('sheet_name', adminPreviewData.active_sheet);
+    }
 
     try {
       const res = await fetch('/api/v1/admin/import-csv', {
