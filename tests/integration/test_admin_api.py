@@ -181,3 +181,57 @@ def test_admin_excel_multi_sheet_flow(client: TestClient):
             pass
 
 
+def test_admin_explorer_schema_and_records(client: TestClient):
+    # Fetch tables first to pick an existing table in e-commerce
+    tbl_res = client.get("/api/v1/admin/tables")
+    assert tbl_res.status_code == 200
+    tables = tbl_res.json()
+    assert len(tables) > 0
+    sample_table = tables[0]["table_name"]
+
+    # 1. Test GET /tables/{table_name}/schema
+    schema_res = client.get(f"/api/v1/admin/tables/{sample_table}/schema")
+    assert schema_res.status_code == 200, schema_res.text
+    schema_data = schema_res.json()
+    assert schema_data["table"] == sample_table
+    assert "columns" in schema_data
+    assert len(schema_data["columns"]) > 0
+    col0 = schema_data["columns"][0]
+    assert "name" in col0
+    assert "type" in col0
+    assert "is_nullable" in col0
+    assert "is_primary_key" in col0
+
+    # 2. Test GET /tables/{table_name}/records with pagination
+    rec_res = client.get(f"/api/v1/admin/tables/{sample_table}/records?limit=10&offset=0")
+    assert rec_res.status_code == 200, rec_res.text
+    rec_data = rec_res.json()
+    assert rec_data["table"] == sample_table
+    assert rec_data["limit"] == 10
+    assert rec_data["offset"] == 0
+    assert "columns" in rec_data
+    assert "rows" in rec_data
+    assert "total_records" in rec_data
+    assert isinstance(rec_data["rows"], list)
+
+    # 3. Test non-existent table schema returns 404
+    non_existent = client.get("/api/v1/admin/tables/non_existent_table_9999/schema")
+    assert non_existent.status_code == 404
+
+
+def test_admin_switch_database(client: TestClient):
+    from app.core.config import get_settings
+
+    settings = get_settings()
+    current_db = settings.DB_NAME
+
+    # Switch to current database
+    res = client.post("/api/v1/admin/switch-db", json={"database_name": current_db})
+    assert res.status_code == 200, res.text
+    data = res.json()
+    assert data["status"] == "success"
+    assert data["active_database"] == current_db
+    assert "message" in data
+
+
+

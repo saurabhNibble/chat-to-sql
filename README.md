@@ -32,6 +32,7 @@ chat-to-sql/
 │   │   ├── clarification.py     # Morphological ambiguity detection service
 │   │   ├── conversation.py      # Multi-turn chat memory & clarification resolution service
 │   │   ├── csv_ingestion.py     # Schema inference, type detection & PostgreSQL bulk COPY ingestion
+│   │   ├── db_explorer.py       # Multi-database introspection, schema inspector & paginated records
 │   │   ├── sql_generator.py     # Schema-aware SQL generator (Groq/OpenAI LLM + rule-based fallback)
 │   │   ├── sql_validator.py     # AST-level query validation using sqlglot
 │   │   └── query_service.py     # Orchestrator coordinating business workflow
@@ -217,15 +218,34 @@ ruff check .
 
 ---
 
-## 🛠️ Data Studio: Automated CSV & Multi-Sheet Excel Ingestion
+## 🗄️ Database & Ingestion Studio
 
-ChatSQL Pro includes an enterprise-grade automated data ingestion pipeline that lets administrators upload raw CSV or multi-sheet Excel workbooks (`.xlsx`, `.xls`) and load them into PostgreSQL with **zero manual schema definition**.
+ChatSQL Pro features a complete two-part administration studio, cleanly separated into dedicated workspaces:
 
-### Key Capabilities:
+### 1. 🗄️ Database & Table Explorer (Live Data & Schema)
+- **Multi-Database Selector & Switcher**:
+  - Dynamically lists all non-template databases available on the PostgreSQL cluster (`GET /api/v1/admin/databases`).
+  - View real-time database status (`🟢 Active Chat DB` or `⚪ Standby DB`).
+  - **1-Click Active DB Switch**: Instantly switch the application's connection pool and schema cache to any selected database (`POST /api/v1/admin/switch-db`), enabling the ChatSQL AI mentor to query the newly chosen database on the fly.
+- **Searchable Table Directory**:
+  - Introspects all public tables in the chosen database with real-time row counts and column counts.
+  - Quick-search filter for rapid navigation through enterprise schemas with dozens of tables.
+- **Detailed Schema Metadata Inspector**:
+  - Inspects column names, PostgreSQL data types, Primary Key flags (`🔑 PK`), nullability (`YES`/`NO`), and default expressions (`GET /api/v1/admin/tables/{table}/schema`).
+- **Paginated Live Records Grid**:
+  - Fetches and renders live data in strictly read-only mode (`GET /api/v1/admin/tables/{table}/records`).
+  - Configurable page sizes (25, 50, 100 rows) with responsive `◀ Prev` and `Next ▶` pagination controls.
+  - Safe type serialization for `Decimal`, `datetime`, and `UUID` types, and dedicated visual pills for `NULL` cells.
+- **Chat Deep-Linking**:
+  - Direct `💬 Query in Chat ➔` action button populates the chat prompt to immediately interrogate the selected table.
+
+---
+
+### 2. 📥 Automated CSV & Multi-Sheet Excel Ingestion Engine
 - **Multi-Sheet Excel Support (e.g. `carDB.xlsx`)**:
   - Automatically detects all worksheets (e.g., `carCategories` and `carModels`).
   - Converts camelCase/PascalCase sheet names to idiomatic PostgreSQL snake_case tables (`car_categories`, `car_models`).
-  - Interactive sheet selector bar in the UI allows switching between sheets to preview columns and data types.
+  - Interactive sheet switcher pills allow previewing columns and inferred types sheet-by-sheet.
   - 1-click **"Ingest ALL Sheets"** creates multiple relational tables in PostgreSQL simultaneously.
 - **Intelligent Type Detection**:
   - Analyzes column data to infer: `BOOLEAN`, `INTEGER`, `BIGINT`, `NUMERIC`, `DATE`, `TIMESTAMPTZ`, `UUID`, `JSONB`, and `TEXT`.
@@ -233,13 +253,11 @@ ChatSQL Pro includes an enterprise-grade automated data ingestion pipeline that 
 - **SQL Injection Defense**:
   - Identifiers (database names, table names, and column headers) are sanitized and safely quoted using `psycopg2.sql.Identifier`.
 - **Database Auto-Provisioning**:
-  - If the specified database doesn't exist, the engine connects to the PostgreSQL maintenance database and provisions it automatically.
+  - If the specified target database does not exist, the engine connects to PostgreSQL and provisions it automatically.
 - **High-Performance Streaming Bulk Loading**:
   - Uses PostgreSQL's native streaming **`COPY FROM STDIN WITH CSV`** protocol inside an atomic transaction (`BEGIN` -> `COPY` -> `COMMIT`), ingesting **50,000+ rows in <2 seconds**.
-- **Interactive UI Review & Overrides**:
-  - In the web app's **🛠️ Data Studio (CSV Upload)** tab, admins can preview detected types, customize any column via dropdowns, inspect the first 5 sample rows, and choose conflict policies (`Replace`, `Fail if exists`, `Append`).
-- **Instant Schema Sync**:
-  - Automatically refreshes the schema cache upon completion so all newly created tables can be queried and joined in the chat tutor immediately.
+- **Interactive Type Overrides & Sample Preview**:
+  - Admins can customize any column via type dropdowns, preview the top 5 sample rows, and choose conflict policies (`Replace`, `Fail if exists`, `Append`).
 
 ### CLI Usage
 You can also run automated imports directly from the command line:
@@ -267,11 +285,14 @@ Interactive OpenAPI documentation is accessible at:
 | `GET` | `/` | Root Redirect | Redirects to interactive documentation (`/docs`) |
 | `GET` | `/api/v1/health` | Health Check | Verifies service & PostgreSQL pool readiness |
 | `POST` | `/api/v1/query` | Text-to-SQL | Translates prompt, resolves ambiguities, & runs query |
+| `GET` | `/api/v1/admin/databases` | Databases List | Lists available non-template PostgreSQL databases on the server |
+| `GET` | `/api/v1/admin/tables` | Database Tables | Lists tables, column lists, and row counts in active or specified DB |
+| `GET` | `/api/v1/admin/tables/{table}/schema` | Table Schema | Introspects column definitions, types, nullability, defaults & PKs |
+| `GET` | `/api/v1/admin/tables/{table}/records` | Table Records | Fetches paginated live table records in read-only mode |
+| `POST` | `/api/v1/admin/switch-db` | Switch Active DB | Switches active chat DB, connection pool & invalidates schema cache |
 | `POST` | `/api/v1/admin/preview-csv` | File Preview | Inspects CSV or Excel sheet, auto-detects schema & returns top 5 rows |
 | `POST` | `/api/v1/admin/import-csv` | Single Ingestion | Bulk loads CSV or specific Excel sheet into PostgreSQL via streaming COPY |
 | `POST` | `/api/v1/admin/import-all-sheets` | Batch Ingestion | Ingests all sheets from an Excel workbook as separate relational tables |
-| `GET` | `/api/v1/admin/tables` | Database Tables | Lists all tables, column metadata & row counts |
-| `GET` | `/api/v1/admin/databases` | Databases List | Lists available PostgreSQL databases on the server |
 
 #### Example Query Request
 ```bash
