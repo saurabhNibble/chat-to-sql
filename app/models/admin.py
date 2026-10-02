@@ -79,3 +79,22 @@ class SwitchDatabaseResponse(BaseModel):
     status: str = "success"
     active_database: str
     message: str
+
+
+class DeleteResponse(BaseModel):
+    status: str = "success"
+    message: str
+    affected_count: int | None = None
+
+
+class DeleteRowRequest(BaseModel):
+    database: str | None = None
+    condition: dict[str, Any]
+
+
+class MultiCsvImportResponse(BaseModel):
+    status: str
+    database: str
+    tables: list[CsvImportResponse]
+    total_rows_inserted: int
+

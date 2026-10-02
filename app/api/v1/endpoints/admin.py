@@ -10,6 +10,9 @@ from app.models.admin import (
     CsvImportResponse,
     CsvPreviewResponse,
     DatabaseInfo,
+    DeleteResponse,
+    DeleteRowRequest,
+    MultiCsvImportResponse,
     MultiSheetImportResponse,
     SwitchDatabaseRequest,
     SwitchDatabaseResponse,
@@ -301,4 +304,192 @@ def switch_database(req: SwitchDatabaseRequest):
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to switch database: {str(exc)}",
         )
+
+
+@router.post(
+    "/import-multiple-csvs",
+    response_model=MultiCsvImportResponse,
+    summary="Batch upload and import multiple CSV or Excel files into PostgreSQL as separate tables",
+)
+async def import_multiple_csvs(
+    files: list[UploadFile] = File(..., description="List of CSV or Excel files to import"),
+    db_name: str | None = Form(default=None, description="Target PostgreSQL database name"),
+    mode: str = Form(default="replace", description="Conflict mode: 'replace', 'fail', or 'append'"),
+):
+    if not files:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="At least one file is required.",
+        )
+
+    prepared_files: list[tuple[str, bytes]] = []
+    for f in files:
+        if not f.filename:
+            continue
+        content = await f.read()
+        if not content:
+            continue
+        if not is_valid_dataset_file(f.filename, content):
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"File '{f.filename}' is not a valid CSV or Excel file.",
+            )
+        prepared_files.append((f.filename, content))
+
+    if not prepared_files:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="No valid file contents received.",
+        )
+
+    try:
+        result = csv_ingestion_service.ingest_multiple_files(
+            files=prepared_files,
+            db_name=db_name or settings.DB_NAME,
+            mode=mode,
+        )
+        return result
+    except ValueError as val_err:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(val_err),
+        )
+    except Exception as exc:
+        logger.error(f"Failed to batch import files: {exc}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to batch import files: {str(exc)}",
+        )
+
+
+@router.delete(
+    "/databases/{database_name}",
+    response_model=DeleteResponse,
+    summary="Drop a PostgreSQL database after terminating active client connections",
+)
+def delete_database(database_name: str):
+    try:
+        db_explorer_service.drop_database(database_name)
+        return DeleteResponse(
+            status="success",
+            message=f"Database '{database_name}' was successfully dropped.",
+        )
+    except ValueError as val_err:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(val_err),
+        )
+    except Exception as exc:
+        logger.error(f"Failed to drop database '{database_name}': {exc}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to drop database: {str(exc)}",
+        )
+
+
+@router.delete(
+    "/tables/{table_name}",
+    response_model=DeleteResponse,
+    summary="Drop a table from the specified or active PostgreSQL database",
+)
+def delete_table(table_name: str, db_name: str | None = None, cascade: bool = True):
+    try:
+        db_explorer_service.drop_table(db_name, table_name, cascade=cascade)
+        return DeleteResponse(
+            status="success",
+            message=f"Table '{table_name}' was successfully dropped.",
+        )
+    except ValueError as val_err:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(val_err),
+        )
+    except Exception as exc:
+        logger.error(f"Failed to drop table '{table_name}': {exc}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to drop table: {str(exc)}",
+        )
+
+
+@router.delete(
+    "/tables/{table_name}/columns/{column_name}",
+    response_model=DeleteResponse,
+    summary="Drop a column from a table in the specified or active database",
+)
+def delete_column(
+    table_name: str,
+    column_name: str,
+    db_name: str | None = None,
+    cascade: bool = True,
+):
+    try:
+        db_explorer_service.drop_column(db_name, table_name, column_name, cascade=cascade)
+        return DeleteResponse(
+            status="success",
+            message=f"Column '{column_name}' was successfully dropped from '{table_name}'.",
+        )
+    except ValueError as val_err:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(val_err),
+        )
+    except Exception as exc:
+        logger.error(f"Failed to drop column '{column_name}' from '{table_name}': {exc}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to drop column: {str(exc)}",
+        )
+
+
+@router.post(
+    "/tables/{table_name}/rows/delete",
+    response_model=DeleteResponse,
+    summary="Delete specific rows matching a condition from a table",
+)
+def delete_rows(table_name: str, req: DeleteRowRequest):
+    try:
+        affected = db_explorer_service.delete_rows(req.database, table_name, req.condition)
+        return DeleteResponse(
+            status="success",
+            message=f"Successfully deleted {affected} row(s) from '{table_name}'.",
+            affected_count=affected,
+        )
+    except ValueError as val_err:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(val_err),
+        )
+    except Exception as exc:
+        logger.error(f"Failed to delete rows from '{table_name}': {exc}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to delete rows: {str(exc)}",
+        )
+
+
+@router.post(
+    "/tables/{table_name}/truncate",
+    response_model=DeleteResponse,
+    summary="Truncate (clear all rows) from a table",
+)
+def truncate_table(table_name: str, db_name: str | None = None, cascade: bool = True):
+    try:
+        db_explorer_service.truncate_table(db_name, table_name, cascade=cascade)
+        return DeleteResponse(
+            status="success",
+            message=f"Table '{table_name}' was successfully truncated.",
+        )
+    except ValueError as val_err:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(val_err),
+        )
+    except Exception as exc:
+        logger.error(f"Failed to truncate table '{table_name}': {exc}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to truncate table: {str(exc)}",
+        )
+
 

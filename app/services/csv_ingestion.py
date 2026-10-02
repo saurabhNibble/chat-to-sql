@@ -592,5 +592,56 @@ class CsvIngestionService:
             "total_rows_inserted": total_rows,
         }
 
+    def ingest_multiple_files(
+        self,
+        files: list[tuple[str, bytes]],
+        db_name: str | None = None,
+        mode: str = "replace",
+    ) -> dict[str, Any]:
+        """
+        Batch ingest multiple CSV (or Excel) files into PostgreSQL as separate tables.
+        """
+        target_db = clean_database_name(db_name, self.settings.DB_NAME)
+        self.ensure_database_exists(target_db)
+
+        if not files:
+            raise ValueError("No files provided for ingestion.")
+
+        results = []
+        total_rows = 0
+
+        for filename, content in files:
+            if is_excel_file(filename, content):
+                res = self.ingest_all_sheets(
+                    file_bytes=content,
+                    filename=filename,
+                    db_name=target_db,
+                    mode=mode,
+                )
+                results.extend(res["tables"])
+                total_rows += res["total_rows_inserted"]
+            else:
+                import os
+
+                stem = os.path.splitext(filename)[0]
+                table_name = sanitize_identifier(stem, fallback_prefix="table")
+                res = self.ingest_csv(
+                    file_bytes=content,
+                    table_name=table_name,
+                    db_name=target_db,
+                    mode=mode,
+                    filename=filename,
+                )
+                results.append(res)
+                total_rows += res["rows_inserted"]
+
+        return {
+            "status": "success",
+            "database": target_db,
+            "tables": results,
+            "total_rows_inserted": total_rows,
+        }
+
 
 csv_ingestion_service = CsvIngestionService()
+

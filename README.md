@@ -222,26 +222,37 @@ ruff check .
 
 ChatSQL Pro features a complete two-part administration studio, cleanly separated into dedicated workspaces:
 
-### 1. 🗄️ Database & Table Explorer (Live Data & Schema)
+### 1. 🗄️ Database & Table Explorer (Live Data, Schema & Deletion Controls)
 - **Multi-Database Selector & Switcher**:
   - Dynamically lists all non-template databases available on the PostgreSQL cluster (`GET /api/v1/admin/databases`).
   - View real-time database status (`🟢 Active Chat DB` or `⚪ Standby DB`).
   - **1-Click Active DB Switch**: Instantly switch the application's connection pool and schema cache to any selected database (`POST /api/v1/admin/switch-db`), enabling the ChatSQL AI mentor to query the newly chosen database on the fly.
+  - **Drop Database (`DELETE /api/v1/admin/databases/{database_name}`)**: Drop entire database with connection termination. Protected system databases (`postgres`, `template0`, `template1`) cannot be deleted.
 - **Searchable Table Directory**:
   - Introspects all public tables in the chosen database with real-time row counts and column counts.
   - Quick-search filter for rapid navigation through enterprise schemas with dozens of tables.
-- **Detailed Schema Metadata Inspector**:
+- **Detailed Schema Metadata Inspector & Column Deletion**:
   - Inspects column names, PostgreSQL data types, Primary Key flags (`🔑 PK`), nullability (`YES`/`NO`), and default expressions (`GET /api/v1/admin/tables/{table}/schema`).
-- **Paginated Live Records Grid**:
+  - **Drop Column (`DELETE /api/v1/admin/tables/{table}/columns/{col}`)**: Drop specific column with `CASCADE` directly from the schema table.
+- **Paginated Live Records Grid & Row Deletion / Truncation**:
   - Fetches and renders live data in strictly read-only mode (`GET /api/v1/admin/tables/{table}/records`).
   - Configurable page sizes (25, 50, 100 rows) with responsive `◀ Prev` and `Next ▶` pagination controls.
   - Safe type serialization for `Decimal`, `datetime`, and `UUID` types, and dedicated visual pills for `NULL` cells.
+  - **Delete Specific Row (`POST /api/v1/admin/tables/{table}/rows/delete`)**: 1-click delete button on each row with primary key / parameterized WHERE condition.
+  - **Truncate Table (`POST /api/v1/admin/tables/{table}/truncate`)**: Fast wipe of all table rows with schema preservation.
+  - **Drop Table (`DELETE /api/v1/admin/tables/{table}`)**: Permanent drop with `CASCADE`.
+- **Industry-Standard Typed Confirmation UX**:
+  - High-impact destructive operations (Drop Database, Drop Table, Truncate) follow industry-standard confirmation patterns (GitHub/AWS style), requiring users to explicitly type the target database name, table name, or `TRUNCATE` before unlocking the red action button.
 - **Chat Deep-Linking**:
   - Direct `💬 Query in Chat ➔` action button populates the chat prompt to immediately interrogate the selected table.
 
 ---
 
-### 2. 📥 Automated CSV & Multi-Sheet Excel Ingestion Engine
+### 2. 📥 Automated Multi-CSV & Excel Ingestion Engine
+- **Simultaneous Multi-CSV Batch Upload**:
+  - Drag and drop or file-select multiple `.csv` or `.xlsx` files simultaneously.
+  - File pill switcher bar enables switching schema preview and type overrides between uploaded files.
+  - **1-Click "Ingest ALL Uploaded Files"**: Batch imports all uploaded files into separate PostgreSQL tables via `POST /api/v1/admin/import-multiple-csvs`.
 - **Multi-Sheet Excel Support (e.g. `carDB.xlsx`)**:
   - Automatically detects all worksheets (e.g., `carCategories` and `carModels`).
   - Converts camelCase/PascalCase sheet names to idiomatic PostgreSQL snake_case tables (`car_categories`, `car_models`).
@@ -286,13 +297,19 @@ Interactive OpenAPI documentation is accessible at:
 | `GET` | `/api/v1/health` | Health Check | Verifies service & PostgreSQL pool readiness |
 | `POST` | `/api/v1/query` | Text-to-SQL | Translates prompt, resolves ambiguities, & runs query |
 | `GET` | `/api/v1/admin/databases` | Databases List | Lists available non-template PostgreSQL databases on the server |
+| `DELETE` | `/api/v1/admin/databases/{database}` | Drop Database | Drops database after terminating active client sessions |
 | `GET` | `/api/v1/admin/tables` | Database Tables | Lists tables, column lists, and row counts in active or specified DB |
+| `DELETE` | `/api/v1/admin/tables/{table}` | Drop Table | Permanently drops table with `CASCADE` |
 | `GET` | `/api/v1/admin/tables/{table}/schema` | Table Schema | Introspects column definitions, types, nullability, defaults & PKs |
+| `DELETE` | `/api/v1/admin/tables/{table}/columns/{col}` | Drop Column | Drops specific column from table with `CASCADE` |
 | `GET` | `/api/v1/admin/tables/{table}/records` | Table Records | Fetches paginated live table records in read-only mode |
+| `POST` | `/api/v1/admin/tables/{table}/rows/delete` | Delete Rows | Deletes rows matching condition dictionary |
+| `POST` | `/api/v1/admin/tables/{table}/truncate` | Truncate Table | Wipes all rows in table while preserving schema |
 | `POST` | `/api/v1/admin/switch-db` | Switch Active DB | Switches active chat DB, connection pool & invalidates schema cache |
 | `POST` | `/api/v1/admin/preview-csv` | File Preview | Inspects CSV or Excel sheet, auto-detects schema & returns top 5 rows |
 | `POST` | `/api/v1/admin/import-csv` | Single Ingestion | Bulk loads CSV or specific Excel sheet into PostgreSQL via streaming COPY |
 | `POST` | `/api/v1/admin/import-all-sheets` | Batch Ingestion | Ingests all sheets from an Excel workbook as separate relational tables |
+| `POST` | `/api/v1/admin/import-multiple-csvs` | Multi-File Batch | Ingests multiple CSV/Excel files into separate relational tables |
 
 #### Example Query Request
 ```bash

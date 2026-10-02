@@ -2211,6 +2211,138 @@ CHAT_HTML_CONTENT = r"""<!DOCTYPE html>
       font-size: 0.7rem;
       font-weight: 700;
     }
+
+    /* Danger Confirmation Modal */
+    .danger-modal-backdrop {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(15, 23, 42, 0.75);
+      backdrop-filter: blur(4px);
+      z-index: 10000;
+      align-items: center;
+      justify-content: center;
+      padding: 1rem;
+    }
+    .danger-modal-backdrop.open {
+      display: flex;
+    }
+    .danger-modal {
+      background: var(--bg-secondary);
+      border: 1px solid rgba(239, 68, 68, 0.4);
+      border-radius: 12px;
+      max-width: 480px;
+      width: 100%;
+      padding: 1.5rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+      box-shadow: 0 20px 45px rgba(0, 0, 0, 0.6);
+      animation: modalFadeIn 0.2s ease-out;
+    }
+    @keyframes modalFadeIn {
+      from { opacity: 0; transform: translateY(-10px) scale(0.98); }
+      to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+    .danger-modal-header {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+    .danger-modal-icon {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      background: rgba(239, 68, 68, 0.15);
+      color: #ef4444;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.25rem;
+      flex-shrink: 0;
+    }
+    .danger-modal-title {
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: var(--text-main);
+    }
+    .danger-modal-desc {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      line-height: 1.5;
+    }
+    .btn-danger-confirm {
+      background: linear-gradient(135deg, #ef4444, #dc2626);
+      color: white;
+      border: none;
+      border-radius: 6px;
+      padding: 0.55rem 1.25rem;
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .btn-danger-confirm:hover {
+      box-shadow: 0 4px 12px rgba(239, 68, 68, 0.4);
+    }
+    .btn-danger-confirm:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+      box-shadow: none;
+    }
+    .btn-danger-action {
+      background: rgba(239, 68, 68, 0.12);
+      color: #f87171;
+      border: 1px solid rgba(239, 68, 68, 0.3);
+      border-radius: 6px;
+      padding: 0.35rem 0.65rem;
+      font-size: 0.76rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+    }
+    .btn-danger-action:hover {
+      background: rgba(239, 68, 68, 0.25);
+      color: #fca5a5;
+      border-color: #ef4444;
+    }
+    .multi-files-container {
+      display: flex;
+      flex-direction: column;
+      gap: 0.45rem;
+      max-height: 180px;
+      overflow-y: auto;
+      padding-right: 0.25rem;
+    }
+    .file-tab-pill {
+      background: var(--bg-tertiary);
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      padding: 0.35rem 0.7rem;
+      font-size: 0.78rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      cursor: pointer;
+      transition: all 0.15s;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+    }
+    .file-tab-pill:hover {
+      color: var(--text-main);
+      border-color: var(--accent);
+    }
+    .file-tab-pill.active {
+      background: rgba(56, 189, 248, 0.15);
+      color: var(--accent);
+      border-color: var(--accent);
+    }
   </style>
 </head>
 <body>
@@ -2477,6 +2609,9 @@ CHAT_HTML_CONTENT = r"""<!DOCTYPE html>
               ⚡ Set as Active Chat DB
             </button>
             <button class="btn-studio-action" onclick="refreshExplorerData()">🔄 Refresh</button>
+            <button class="btn-danger-action" id="btn-delete-db" onclick="confirmDeleteDatabase()" title="Drop Database">
+              <span>🗑️</span> Delete DB
+            </button>
           </div>
         </div>
 
@@ -2528,6 +2663,12 @@ CHAT_HTML_CONTENT = r"""<!DOCTYPE html>
                 <div style="display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap;">
                   <button class="btn-studio-action" onclick="querySelectedTableInChat()">💬 Query in Chat ➔</button>
                   <button class="btn-studio-action" onclick="refreshCurrentTableRecords()">🔄 Refresh Records</button>
+                  <button class="btn-danger-action" onclick="confirmTruncateTable()" title="Clear all rows in this table">
+                    <span>🧹</span> Truncate
+                  </button>
+                  <button class="btn-danger-action" onclick="confirmDeleteTable()" title="Drop this table permanently">
+                    <span>🗑️</span> Delete Table
+                  </button>
                 </div>
               </div>
 
@@ -2589,10 +2730,11 @@ CHAT_HTML_CONTENT = r"""<!DOCTYPE html>
                         <th>Key</th>
                         <th>Nullable</th>
                         <th>Default Expression</th>
+                        <th style="width: 80px; text-align: center;">Action</th>
                       </tr>
                     </thead>
                     <tbody id="schema-table-body">
-                      <tr><td colspan="5" style="text-align: center; color: var(--text-dim); padding: 1.5rem;">Loading schema...</td></tr>
+                      <tr><td colspan="6" style="text-align: center; color: var(--text-dim); padding: 1.5rem;">Loading schema...</td></tr>
                     </tbody>
                   </table>
                 </div>
@@ -2644,25 +2786,20 @@ CHAT_HTML_CONTENT = r"""<!DOCTYPE html>
 
           <!-- Card 2: CSV / Excel Upload & File Dropzone -->
           <div class="admin-card">
-            <div class="admin-card-title">📁 2. Upload CSV or Excel Dataset</div>
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+              <div class="admin-card-title">📁 2. Upload CSV or Excel Dataset</div>
+              <span style="font-size: 0.72rem; color: var(--accent); font-weight: 600;">Multi-CSV Enabled</span>
+            </div>
             
             <div class="admin-dropzone" id="admin-dropzone" onclick="document.getElementById('admin-csv-file').click()" ondragover="handleAdminDragOver(event)" ondragleave="handleAdminDragLeave(event)" ondrop="handleAdminDrop(event)">
               <div class="admin-dropzone-icon">📄</div>
-              <div class="admin-dropzone-text">Click or drag & drop a .csv or .xlsx (Excel) file here</div>
-              <div class="admin-dropzone-subtext">Automatic type inference · Supports multi-sheet workbooks (e.g. carCategories, carModels)</div>
-              <input type="file" id="admin-csv-file" accept=".csv, .xlsx, .xls" style="display: none;" onchange="handleAdminFileSelected(event)">
+              <div class="admin-dropzone-text">Click or drag & drop one or multiple .csv / .xlsx files here</div>
+              <div class="admin-dropzone-subtext">Automatic type inference · Multi-CSV batch upload & multi-sheet workbooks</div>
+              <input type="file" id="admin-csv-file" accept=".csv, .xlsx, .xls" multiple style="display: none;" onchange="handleAdminFileSelected(event)">
             </div>
 
-            <div class="admin-file-badge" id="admin-file-badge">
-              <div style="display: flex; align-items: center; gap: 0.5rem;">
-                <span id="badge-file-icon">📊</span>
-                <div>
-                  <strong id="badge-filename">filename.csv</strong>
-                  <div style="font-size: 0.72rem; color: var(--text-muted);" id="badge-filesize">0 KB</div>
-                </div>
-              </div>
-              <button class="btn-studio-action" style="padding: 0.2rem 0.5rem; font-size: 0.75rem;" onclick="resetAdminFile(event)">Remove</button>
-            </div>
+            <!-- List of Uploaded Files Container -->
+            <div class="multi-files-container" id="admin-multi-files-container" style="display: none;"></div>
           </div>
         </div>
 
@@ -2673,8 +2810,14 @@ CHAT_HTML_CONTENT = r"""<!DOCTYPE html>
             <div style="font-size: 0.8rem; color: var(--accent);" id="preview-metrics">Detected 0 columns · ~0 rows</div>
           </div>
 
+          <!-- Multi-CSV File Switcher Bar -->
+          <div id="multi-csv-bar" style="display: none; align-items: center; gap: 0.6rem; flex-wrap: wrap; background: var(--bg-tertiary); padding: 0.6rem 0.85rem; border-radius: 8px; border: 1px solid var(--border-color); margin-bottom: 0.5rem;">
+            <span style="font-size: 0.76rem; font-weight: 700; color: var(--text-dim); text-transform: uppercase;">Uploaded Files:</span>
+            <div id="multi-csv-pills" style="display: flex; gap: 0.4rem; flex-wrap: wrap;"></div>
+          </div>
+
           <!-- Excel Multi-Sheet Switcher Bar -->
-          <div id="excel-sheets-bar" style="display: none; align-items: center; gap: 0.6rem; flex-wrap: wrap; background: var(--bg-tertiary); padding: 0.6rem 0.85rem; border-radius: 8px; border: 1px solid var(--border-color);">
+          <div id="excel-sheets-bar" style="display: none; align-items: center; gap: 0.6rem; flex-wrap: wrap; background: var(--bg-tertiary); padding: 0.6rem 0.85rem; border-radius: 8px; border: 1px solid var(--border-color); margin-bottom: 0.5rem;">
             <span style="font-size: 0.76rem; font-weight: 700; color: var(--text-dim); text-transform: uppercase;">Sheets in Workbook:</span>
             <div id="excel-sheets-pills" style="display: flex; gap: 0.4rem; flex-wrap: wrap;"></div>
           </div>
@@ -2712,10 +2855,13 @@ CHAT_HTML_CONTENT = r"""<!DOCTYPE html>
           <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1rem; margin-top: 0.5rem;">
             <div style="display: flex; gap: 0.75rem; flex-wrap: wrap;">
               <button class="btn-ingest-run" id="btn-run-ingest" onclick="executeCsvIngestion()">
-                <span>🚀</span> Stream This Sheet into PostgreSQL
+                <span>🚀</span> Stream Active File into PostgreSQL
               </button>
               <button class="btn-ingest-run" id="btn-run-all-sheets" style="display: none; background: linear-gradient(135deg, #059669, #10b981);" onclick="executeAllSheetsIngestion()">
                 <span>📦</span> Ingest ALL Sheets (Multiple Tables)
+              </button>
+              <button class="btn-ingest-run" id="btn-run-all-csvs" style="display: none; background: linear-gradient(135deg, #059669, #10b981);" onclick="executeAllCsvsIngestion()">
+                <span>📦</span> Ingest ALL Uploaded CSVs
               </button>
             </div>
             <div id="ingest-spinner-msg" style="font-size: 0.82rem; color: var(--text-muted); display: none;">
@@ -2848,6 +2994,30 @@ CHAT_HTML_CONTENT = r"""<!DOCTYPE html>
     </form>
   </div>
 </dialog>
+
+<!-- Industry-Standard Destructive Action Confirmation Modal -->
+<div class="danger-modal-backdrop" id="danger-modal-backdrop" onclick="handleDangerBackdropClick(event)">
+  <div class="danger-modal" role="dialog" aria-modal="true" aria-labelledby="danger-modal-title">
+    <div class="danger-modal-header">
+      <div class="danger-modal-icon">⚠️</div>
+      <div>
+        <div class="danger-modal-title" id="danger-modal-title">Confirm Deletion</div>
+        <div style="font-size: 0.75rem; color: #f87171; font-weight: 600;">Destructive Action · Permanent Loss</div>
+      </div>
+    </div>
+    <div class="danger-modal-desc" id="danger-modal-desc">
+      Are you sure you want to proceed? This action cannot be undone.
+    </div>
+    <div class="admin-input-group" id="danger-modal-input-group" style="display: none;">
+      <label id="danger-modal-input-label" for="danger-modal-input">Type name to confirm:</label>
+      <input type="text" id="danger-modal-input" class="admin-input" autocomplete="off" placeholder="" oninput="validateDangerConfirmationInput()">
+    </div>
+    <div style="display: flex; justify-content: flex-end; gap: 0.75rem; margin-top: 0.5rem;">
+      <button class="btn-studio-action" onclick="closeDangerModal()">Cancel</button>
+      <button class="btn-danger-confirm" id="btn-danger-confirm-action" onclick="executeDangerAction()">Delete</button>
+    </div>
+  </div>
+</div>
 
 <script>
   let activeConversationId = null;
@@ -3976,6 +4146,7 @@ CHAT_HTML_CONTENT = r"""<!DOCTYPE html>
   // ADMIN & CSV INGESTION STUDIO LOGIC
   // =============================================================
   let selectedAdminFile = null;
+  let selectedAdminFiles = [];
   let adminPreviewData = null;
   let lastIngestedTable = null;
 
@@ -3996,24 +4167,141 @@ CHAT_HTML_CONTENT = r"""<!DOCTYPE html>
     const zone = document.getElementById('admin-dropzone');
     if (zone) zone.classList.remove('dragover');
     if (e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files.length > 0) {
-      processAdminFile(e.dataTransfer.files[0]);
+      handleAdminFilesList(Array.from(e.dataTransfer.files));
     }
   }
 
   function handleAdminFileSelected(e) {
     if (e.target && e.target.files && e.target.files.length > 0) {
-      processAdminFile(e.target.files[0]);
+      handleAdminFilesList(Array.from(e.target.files));
+    }
+  }
+
+  function handleAdminFilesList(files) {
+    const validFiles = files.filter(f => {
+      const fn = f.name.toLowerCase();
+      return fn.endsWith('.csv') || fn.endsWith('.xlsx') || fn.endsWith('.xls') || fn.endsWith('.xlsm');
+    });
+
+    if (validFiles.length === 0) {
+      alert('Please select valid CSV (.csv) or Excel (.xlsx, .xls) files.');
+      return;
+    }
+
+    selectedAdminFiles = validFiles;
+    selectedAdminFile = validFiles[0];
+    renderMultiFilesBadges();
+    processAdminFile(selectedAdminFile);
+  }
+
+  function switchActiveAdminFile(idx) {
+    if (!selectedAdminFiles[idx]) return;
+    selectedAdminFile = selectedAdminFiles[idx];
+    renderMultiFilesBadges();
+    processAdminFile(selectedAdminFile);
+  }
+
+  function removeAdminFile(idx, e) {
+    if (e) e.stopPropagation();
+    if (idx < 0 || idx >= selectedAdminFiles.length) return;
+    selectedAdminFiles.splice(idx, 1);
+    if (selectedAdminFiles.length === 0) {
+      resetAdminFile();
+    } else {
+      selectedAdminFile = selectedAdminFiles[0];
+      renderMultiFilesBadges();
+      processAdminFile(selectedAdminFile);
+    }
+  }
+
+  function renderMultiFilesBadges() {
+    const container = document.getElementById('admin-multi-files-container');
+    const multiCsvBar = document.getElementById('multi-csv-bar');
+    const multiCsvPills = document.getElementById('multi-csv-pills');
+    const btnAllCsvs = document.getElementById('btn-run-all-csvs');
+
+    if (!container) return;
+
+    if (selectedAdminFiles.length === 0) {
+      container.style.display = 'none';
+      container.innerHTML = '';
+      if (multiCsvBar) multiCsvBar.style.display = 'none';
+      if (btnAllCsvs) btnAllCsvs.style.display = 'none';
+      return;
+    }
+
+    container.style.display = 'flex';
+    container.innerHTML = '';
+
+    selectedAdminFiles.forEach((file, idx) => {
+      const fn = file.name.toLowerCase();
+      const isExcel = fn.endsWith('.xlsx') || fn.endsWith('.xls') || fn.endsWith('.xlsm');
+      const isActive = file === selectedAdminFile;
+      const kb = (file.size / 1024).toFixed(1);
+
+      const item = document.createElement('div');
+      item.style.cssText = `display: flex; align-items: center; justify-content: space-between; background: var(--bg-tertiary); padding: 0.45rem 0.75rem; border-radius: 6px; border: 1px solid ${isActive ? 'var(--accent)' : 'var(--border-color)'}; font-size: 0.8rem; cursor: pointer; transition: all 0.15s;`;
+      item.onclick = () => switchActiveAdminFile(idx);
+
+      item.innerHTML = `
+        <div style="display: flex; align-items: center; gap: 0.5rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+          <span>${isExcel ? '📗' : '📊'}</span>
+          <span style="font-weight: 600; color: ${isActive ? 'var(--accent)' : 'var(--text-main)'}; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${escapeHtml(file.name)}</span>
+          <span style="color: var(--text-dim); font-size: 0.72rem;">(${kb} KB)</span>
+          ${isActive ? '<span style="font-size: 0.68rem; background: rgba(56, 189, 248, 0.2); color: var(--accent); padding: 1px 5px; border-radius: 4px; font-weight: 700;">ACTIVE</span>' : ''}
+        </div>
+        <button type="button" style="background: none; border: none; color: var(--text-dim); font-size: 0.9rem; cursor: pointer; padding: 2px 6px;" onclick="removeAdminFile(${idx}, event)" title="Remove file">✕</button>
+      `;
+      container.appendChild(item);
+    });
+
+    if (multiCsvBar && multiCsvPills) {
+      if (selectedAdminFiles.length > 1) {
+        multiCsvPills.innerHTML = '';
+        selectedAdminFiles.forEach((file, idx) => {
+          const fn = file.name.toLowerCase();
+          const isExcel = fn.endsWith('.xlsx') || fn.endsWith('.xls') || fn.endsWith('.xlsm');
+          const isActive = file === selectedAdminFile;
+
+          const pill = document.createElement('button');
+          pill.type = 'button';
+          pill.className = `file-tab-pill ${isActive ? 'active' : ''}`;
+          pill.innerHTML = `<span>${isExcel ? '📗' : '📊'}</span><span>${escapeHtml(file.name)}</span>`;
+          pill.onclick = () => switchActiveAdminFile(idx);
+          multiCsvPills.appendChild(pill);
+        });
+        multiCsvBar.style.display = 'flex';
+      } else {
+        multiCsvBar.style.display = 'none';
+      }
+    }
+
+    if (btnAllCsvs) {
+      if (selectedAdminFiles.length > 1) {
+        btnAllCsvs.style.display = 'inline-flex';
+        btnAllCsvs.innerHTML = `<span>📦</span> Ingest ALL ${selectedAdminFiles.length} Uploaded Files`;
+      } else {
+        btnAllCsvs.style.display = 'none';
+      }
     }
   }
 
   function resetAdminFile(e) {
     if (e) e.stopPropagation();
     selectedAdminFile = null;
+    selectedAdminFiles = [];
     adminPreviewData = null;
     const fileInput = document.getElementById('admin-csv-file');
     if (fileInput) fileInput.value = '';
-    const badge = document.getElementById('admin-file-badge');
-    if (badge) badge.style.display = 'none';
+    const container = document.getElementById('admin-multi-files-container');
+    if (container) {
+      container.style.display = 'none';
+      container.innerHTML = '';
+    }
+    const multiCsvBar = document.getElementById('multi-csv-bar');
+    if (multiCsvBar) multiCsvBar.style.display = 'none';
+    const btnAllCsvs = document.getElementById('btn-run-all-csvs');
+    if (btnAllCsvs) btnAllCsvs.style.display = 'none';
     const previewCard = document.getElementById('schema-preview-card');
     if (previewCard) previewCard.style.display = 'none';
     const successAlert = document.getElementById('admin-alert-success');
@@ -4023,6 +4311,7 @@ CHAT_HTML_CONTENT = r"""<!DOCTYPE html>
   }
 
   async function processAdminFile(file, sheetName = null) {
+    if (!file) return;
     const fn = file.name.toLowerCase();
     const isCsv = fn.endsWith('.csv');
     const isExcel = fn.endsWith('.xlsx') || fn.endsWith('.xls') || fn.endsWith('.xlsm');
@@ -4031,19 +4320,6 @@ CHAT_HTML_CONTENT = r"""<!DOCTYPE html>
       return;
     }
     selectedAdminFile = file;
-
-    // Show badge
-    const badge = document.getElementById('admin-file-badge');
-    const badgeName = document.getElementById('badge-filename');
-    const badgeSize = document.getElementById('badge-filesize');
-    const badgeIcon = document.getElementById('badge-file-icon');
-    if (badge && badgeName && badgeSize) {
-      badgeName.textContent = file.name;
-      const kb = (file.size / 1024).toFixed(1);
-      badgeSize.textContent = `${kb} KB`;
-      if (badgeIcon) badgeIcon.textContent = isExcel ? '📗' : '📊';
-      badge.style.display = 'flex';
-    }
 
     // Hide old alerts
     const successAlert = document.getElementById('admin-alert-success');
@@ -4249,6 +4525,83 @@ CHAT_HTML_CONTENT = r"""<!DOCTYPE html>
     }
   }
 
+  async function executeAllCsvsIngestion() {
+    if (!selectedAdminFiles || selectedAdminFiles.length === 0) {
+      alert('Please select one or more CSV/Excel files first.');
+      return;
+    }
+
+    const dbInput = document.getElementById('admin-db-name');
+    const modeRadio = document.querySelector('input[name="admin-mode"]:checked');
+    const dbName = dbInput ? dbInput.value.trim() : 'e-commerce';
+    const mode = modeRadio ? modeRadio.value : 'replace';
+
+    const runBtn = document.getElementById('btn-run-ingest');
+    const btnAllSheets = document.getElementById('btn-run-all-sheets');
+    const btnAllCsvs = document.getElementById('btn-run-all-csvs');
+    const spinnerMsg = document.getElementById('ingest-spinner-msg');
+    const successAlert = document.getElementById('admin-alert-success');
+    const errorAlert = document.getElementById('admin-alert-error');
+
+    if (runBtn) runBtn.disabled = true;
+    if (btnAllSheets) btnAllSheets.disabled = true;
+    if (btnAllCsvs) btnAllCsvs.disabled = true;
+    if (spinnerMsg) {
+      spinnerMsg.textContent = `⏳ Batch streaming ${selectedAdminFiles.length} files into PostgreSQL tables...`;
+      spinnerMsg.style.display = 'block';
+    }
+    if (successAlert) successAlert.style.display = 'none';
+    if (errorAlert) errorAlert.style.display = 'none';
+
+    const formData = new FormData();
+    selectedAdminFiles.forEach(file => {
+      formData.append('files', file);
+    });
+    formData.append('db_name', dbName);
+    formData.append('mode', mode);
+
+    try {
+      const res = await fetch('/api/v1/admin/import-multiple-csvs', {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!res.ok) {
+        const errJson = await res.json().catch(() => ({}));
+        throw new Error(errJson.detail || 'Multi-file ingestion failed.');
+      }
+
+      const result = await res.json();
+      lastIngestedTable = result.tables.length > 0 ? result.tables[0].table : null;
+
+      if (successAlert) {
+        const succText = document.getElementById('alert-success-text');
+        if (succText) {
+          const tableSummaries = result.tables.map(t => `${t.table} (${t.rows_inserted.toLocaleString()} rows)`).join(', ');
+          succText.textContent = `🎉 Batch Upload Complete! Successfully imported ${result.tables.length} tables [${tableSummaries}] into database "${result.database}" (${result.total_rows_inserted.toLocaleString()} total rows).`;
+        }
+        successAlert.style.display = 'flex';
+      }
+
+      loadAdminTables();
+      if (typeof fetchSchemaOverview === 'function') {
+        fetchSchemaOverview();
+      }
+    } catch (err) {
+      console.error('Multi-file ingestion error:', err);
+      if (errorAlert) {
+        const errorText = document.getElementById('alert-error-text');
+        if (errorText) errorText.textContent = `❌ ${err.message}`;
+        errorAlert.style.display = 'flex';
+      }
+    } finally {
+      if (runBtn) runBtn.disabled = false;
+      if (btnAllSheets) btnAllSheets.disabled = false;
+      if (btnAllCsvs) btnAllCsvs.disabled = false;
+      if (spinnerMsg) spinnerMsg.style.display = 'none';
+    }
+  }
+
   async function executeCsvIngestion() {
     if (!selectedAdminFile) {
       alert('Please select a CSV or Excel file first.');
@@ -4279,12 +4632,14 @@ CHAT_HTML_CONTENT = r"""<!DOCTYPE html>
 
     const runBtn = document.getElementById('btn-run-ingest');
     const btnAllSheets = document.getElementById('btn-run-all-sheets');
+    const btnAllCsvs = document.getElementById('btn-run-all-csvs');
     const spinnerMsg = document.getElementById('ingest-spinner-msg');
     const successAlert = document.getElementById('admin-alert-success');
     const errorAlert = document.getElementById('admin-alert-error');
 
     if (runBtn) runBtn.disabled = true;
     if (btnAllSheets) btnAllSheets.disabled = true;
+    if (btnAllCsvs) btnAllCsvs.disabled = true;
     if (spinnerMsg) {
       spinnerMsg.textContent = '⏳ Ingesting rows into PostgreSQL via streaming COPY...';
       spinnerMsg.style.display = 'block';
@@ -4341,6 +4696,8 @@ CHAT_HTML_CONTENT = r"""<!DOCTYPE html>
       }
     } finally {
       if (runBtn) runBtn.disabled = false;
+      if (btnAllSheets) btnAllSheets.disabled = false;
+      if (btnAllCsvs) btnAllCsvs.disabled = false;
       if (spinnerMsg) spinnerMsg.style.display = 'none';
     }
   }
@@ -4356,6 +4713,273 @@ CHAT_HTML_CONTENT = r"""<!DOCTYPE html>
   }
 
   // =============================================================
+  // DESTRUCTIVE ACTION CONFIRMATION MODAL LOGIC (Industry Standard)
+  // =============================================================
+  let dangerModalState = {
+    requiredText: null,
+    onConfirm: null,
+  };
+
+  function openDangerModal({ title, description, requiredText, confirmBtnText = 'Delete', onConfirm }) {
+    dangerModalState.requiredText = requiredText || null;
+    dangerModalState.onConfirm = onConfirm || null;
+
+    const titleEl = document.getElementById('danger-modal-title');
+    const descEl = document.getElementById('danger-modal-desc');
+    const inputGroup = document.getElementById('danger-modal-input-group');
+    const inputLabel = document.getElementById('danger-modal-input-label');
+    const inputEl = document.getElementById('danger-modal-input');
+    const confirmBtn = document.getElementById('btn-danger-confirm-action');
+    const backdrop = document.getElementById('danger-modal-backdrop');
+
+    if (titleEl) titleEl.textContent = title;
+    if (descEl) descEl.innerHTML = description;
+
+    if (requiredText) {
+      if (inputGroup) inputGroup.style.display = 'flex';
+      if (inputLabel) inputLabel.innerHTML = `To confirm, type <strong style="color: #f87171; font-family: monospace;">${escapeHtml(requiredText)}</strong> below:`;
+      if (inputEl) {
+        inputEl.value = '';
+        inputEl.placeholder = requiredText;
+      }
+      if (confirmBtn) confirmBtn.disabled = true;
+    } else {
+      if (inputGroup) inputGroup.style.display = 'none';
+      if (confirmBtn) confirmBtn.disabled = false;
+    }
+
+    if (confirmBtn) {
+      confirmBtn.textContent = confirmBtnText;
+    }
+
+    if (backdrop) {
+      backdrop.classList.add('open');
+    }
+
+    if (requiredText && inputEl) {
+      setTimeout(() => inputEl.focus(), 50);
+    }
+  }
+
+  function closeDangerModal() {
+    const backdrop = document.getElementById('danger-modal-backdrop');
+    if (backdrop) backdrop.classList.remove('open');
+    dangerModalState.requiredText = null;
+    dangerModalState.onConfirm = null;
+  }
+
+  function handleDangerBackdropClick(e) {
+    if (e.target.id === 'danger-modal-backdrop') {
+      closeDangerModal();
+    }
+  }
+
+  function validateDangerConfirmationInput() {
+    const inputEl = document.getElementById('danger-modal-input');
+    const confirmBtn = document.getElementById('btn-danger-confirm-action');
+    if (!dangerModalState.requiredText || !confirmBtn) return;
+    const isMatch = inputEl && inputEl.value.trim() === dangerModalState.requiredText;
+    confirmBtn.disabled = !isMatch;
+  }
+
+  async function executeDangerAction() {
+    if (dangerModalState.requiredText) {
+      const inputEl = document.getElementById('danger-modal-input');
+      if (!inputEl || inputEl.value.trim() !== dangerModalState.requiredText) {
+        return;
+      }
+    }
+
+    const fn = dangerModalState.onConfirm;
+    const confirmBtn = document.getElementById('btn-danger-confirm-action');
+    if (confirmBtn) {
+      confirmBtn.disabled = true;
+      confirmBtn.textContent = 'Processing...';
+    }
+
+    try {
+      if (typeof fn === 'function') {
+        await fn();
+      }
+      closeDangerModal();
+    } catch (err) {
+      console.error('Danger action failed:', err);
+      alert('Action failed: ' + err.message);
+      if (confirmBtn) confirmBtn.disabled = false;
+    }
+  }
+
+  function confirmDeleteDatabase() {
+    if (!selectedExplorerDb) {
+      alert('Please select a database first.');
+      return;
+    }
+    const dbName = selectedExplorerDb;
+    const forbidden = ['postgres', 'template0', 'template1'];
+    if (forbidden.includes(dbName.toLowerCase())) {
+      alert(`System database "${dbName}" is protected and cannot be deleted.`);
+      return;
+    }
+
+    openDangerModal({
+      title: `Drop Database "${dbName}"`,
+      description: `You are about to permanently drop database <strong style="color: #f87171;">${escapeHtml(dbName)}</strong>. All schemas, tables, and data within it will be irreversibly erased. Active client sessions will be terminated.`,
+      requiredText: dbName,
+      confirmBtnText: 'Drop Database',
+      onConfirm: async () => {
+        const res = await fetch(`/api/v1/admin/databases/${encodeURIComponent(dbName)}`, {
+          method: 'DELETE'
+        });
+        if (!res.ok) {
+          const err = await res.json().catch(() => ({}));
+          throw new Error(err.detail || 'Failed to drop database.');
+        }
+        selectedExplorerDb = null;
+        selectedExplorerTable = null;
+        await loadExplorerDatabases();
+      }
+    });
+  }
+
+  function confirmDeleteTable() {
+    if (!selectedExplorerTable) {
+      alert('Please select a table first.');
+      return;
+    }
+    const tableName = selectedExplorerTable;
+    const dbName = selectedExplorerDb;
+
+    openDangerModal({
+      title: `Drop Table "${tableName}"`,
+      description: `You are about to permanently delete table <strong style="color: #f87171;">${escapeHtml(tableName)}</strong> from database <code style="color: var(--accent);">${escapeHtml(dbName)}</code> with CASCADE. All rows, foreign keys, and constraints will be destroyed.`,
+      requiredText: tableName,
+      confirmBtnText: 'Drop Table',
+      onConfirm: async () => {
+        const url = `/api/v1/admin/tables/${encodeURIComponent(tableName)}?db_name=${encodeURIComponent(dbName)}&cascade=true`;
+        const res = await fetch(url, { method: 'DELETE' });
+        if (!res.ok) {
+          const err = await res.json().catch(() => ({}));
+          throw new Error(err.detail || 'Failed to drop table.');
+        }
+        selectedExplorerTable = null;
+        showExplorerEmptyState();
+        await loadExplorerTables(dbName);
+        if (typeof fetchSchemaOverview === 'function') fetchSchemaOverview();
+      }
+    });
+  }
+
+  function confirmTruncateTable() {
+    if (!selectedExplorerTable) {
+      alert('Please select a table first.');
+      return;
+    }
+    const tableName = selectedExplorerTable;
+    const dbName = selectedExplorerDb;
+
+    openDangerModal({
+      title: `Truncate Table "${tableName}"`,
+      description: `You are about to instantly erase ALL records in table <strong style="color: #f87171;">${escapeHtml(tableName)}</strong>. The table schema will remain, but data cannot be recovered.`,
+      requiredText: 'TRUNCATE',
+      confirmBtnText: 'Truncate Table',
+      onConfirm: async () => {
+        const url = `/api/v1/admin/tables/${encodeURIComponent(tableName)}/truncate?db_name=${encodeURIComponent(dbName)}&cascade=true`;
+        const res = await fetch(url, { method: 'POST' });
+        if (!res.ok) {
+          const err = await res.json().catch(() => ({}));
+          throw new Error(err.detail || 'Failed to truncate table.');
+        }
+        await loadTableRecords(tableName, 0);
+        await loadExplorerTables(dbName);
+      }
+    });
+  }
+
+  function confirmDropColumn(colName) {
+    if (!selectedExplorerTable || !colName) return;
+    const tableName = selectedExplorerTable;
+    const dbName = selectedExplorerDb;
+
+    openDangerModal({
+      title: `Drop Column "${colName}"`,
+      description: `Are you sure you want to drop column <strong style="color: #f87171;">${escapeHtml(colName)}</strong> from table <code>${escapeHtml(tableName)}</code>? All data stored in this column will be permanently deleted.`,
+      requiredText: null,
+      confirmBtnText: 'Drop Column',
+      onConfirm: async () => {
+        const url = `/api/v1/admin/tables/${encodeURIComponent(tableName)}/columns/${encodeURIComponent(colName)}?db_name=${encodeURIComponent(dbName)}&cascade=true`;
+        const res = await fetch(url, { method: 'DELETE' });
+        if (!res.ok) {
+          const err = await res.json().catch(() => ({}));
+          throw new Error(err.detail || 'Failed to drop column.');
+        }
+        await loadTableSchema(tableName);
+        await loadTableRecords(tableName, currentRecordsOffset);
+        if (typeof fetchSchemaOverview === 'function') fetchSchemaOverview();
+      }
+    });
+  }
+
+  function confirmDeleteRowByIndex(rowIdx) {
+    if (!selectedExplorerTable) return;
+    const row = currentTableRecordsData[rowIdx];
+    if (!row) return;
+
+    const tableName = selectedExplorerTable;
+    const dbName = selectedExplorerDb;
+
+    const condition = {};
+    if (currentTablePkCols && currentTablePkCols.length > 0) {
+      currentTablePkCols.forEach(pk => {
+        const colIdx = currentTableColumns.indexOf(pk);
+        if (colIdx !== -1 && row[colIdx] !== null && row[colIdx] !== undefined) {
+          condition[pk] = row[colIdx];
+        }
+      });
+    }
+
+    if (Object.keys(condition).length === 0) {
+      let count = 0;
+      currentTableColumns.forEach((c, idx) => {
+        if (count < 2 && row[idx] !== null && row[idx] !== undefined) {
+          condition[c] = row[idx];
+          count++;
+        }
+      });
+    }
+
+    if (Object.keys(condition).length === 0) {
+      alert('Cannot delete row: all values are NULL.');
+      return;
+    }
+
+    const condSummary = Object.entries(condition).map(([k, v]) => `${k} = ${JSON.stringify(v)}`).join(', ');
+
+    openDangerModal({
+      title: 'Delete Row',
+      description: `Are you sure you want to delete this row matching (<strong>${escapeHtml(condSummary)}</strong>) from table <code>${escapeHtml(tableName)}</code>? This action cannot be undone.`,
+      requiredText: null,
+      confirmBtnText: 'Delete Row',
+      onConfirm: async () => {
+        const url = `/api/v1/admin/tables/${encodeURIComponent(tableName)}/rows/delete`;
+        const res = await fetch(url, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            database: dbName,
+            condition: condition
+          })
+        });
+        if (!res.ok) {
+          const err = await res.json().catch(() => ({}));
+          throw new Error(err.detail || 'Failed to delete row.');
+        }
+        await loadTableRecords(tableName, currentRecordsOffset);
+        await loadExplorerTables(dbName);
+      }
+    });
+  }
+
+  // =============================================================
   // DATABASE & TABLE EXPLORER LOGIC
   // =============================================================
   let currentStudioTab = 'explorer'; // 'explorer' or 'ingest'
@@ -4368,6 +4992,9 @@ CHAT_HTML_CONTENT = r"""<!DOCTYPE html>
   let currentRecordsOffset = 0;
   let currentRecordsLimit = 50;
   let totalTableRecords = 0;
+  let currentTableColumns = [];
+  let currentTableRecordsData = [];
+  let currentTablePkCols = [];
 
   function switchStudioTab(tab) {
     currentStudioTab = tab;
@@ -4709,6 +5336,8 @@ CHAT_HTML_CONTENT = r"""<!DOCTYPE html>
       const data = await res.json();
       currentRecordsOffset = data.offset;
       totalTableRecords = data.total_records;
+      currentTableColumns = data.columns || [];
+      currentTableRecordsData = data.rows || [];
 
       const tableBadge = document.getElementById('explorer-table-badge');
       if (tableBadge) {
@@ -4722,14 +5351,19 @@ CHAT_HTML_CONTENT = r"""<!DOCTYPE html>
           th.textContent = col;
           theadRow.appendChild(th);
         });
+        const thAction = document.createElement('th');
+        thAction.style.width = '55px';
+        thAction.style.textAlign = 'center';
+        thAction.textContent = 'Action';
+        theadRow.appendChild(thAction);
       }
 
       if (tbody) {
         tbody.innerHTML = '';
         if (data.rows.length === 0) {
-          tbody.innerHTML = `<tr><td colspan="${Math.max(1, data.columns.length)}" style="text-align: center; color: var(--text-dim); padding: 1.5rem;">No records found in table.</td></tr>`;
+          tbody.innerHTML = `<tr><td colspan="${Math.max(1, data.columns.length + 1)}" style="text-align: center; color: var(--text-dim); padding: 1.5rem;">No records found in table.</td></tr>`;
         } else {
-          data.rows.forEach(row => {
+          data.rows.forEach((row, rowIdx) => {
             const tr = document.createElement('tr');
             row.forEach(cell => {
               const td = document.createElement('td');
@@ -4740,6 +5374,10 @@ CHAT_HTML_CONTENT = r"""<!DOCTYPE html>
               }
               tr.appendChild(td);
             });
+            const tdAction = document.createElement('td');
+            tdAction.style.textAlign = 'center';
+            tdAction.innerHTML = `<button type="button" class="btn-danger-action" style="padding: 2px 7px; font-size: 0.72rem;" onclick="confirmDeleteRowByIndex(${rowIdx})" title="Delete row">🗑️</button>`;
+            tr.appendChild(tdAction);
             tbody.appendChild(tr);
           });
         }
@@ -4764,7 +5402,7 @@ CHAT_HTML_CONTENT = r"""<!DOCTYPE html>
   async function loadTableSchema(tableName) {
     const tbody = document.getElementById('schema-table-body');
     if (tbody) {
-      tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; color: var(--text-dim); padding: 1.5rem;">Loading schema...</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: var(--text-dim); padding: 1.5rem;">Loading schema...</td></tr>';
     }
 
     try {
@@ -4775,6 +5413,8 @@ CHAT_HTML_CONTENT = r"""<!DOCTYPE html>
       }
 
       const data = await res.json();
+      currentTablePkCols = (data.columns || []).filter(c => c.is_primary_key).map(c => c.name);
+
       const colsBadge = document.getElementById('explorer-cols-badge');
       if (colsBadge) {
         colsBadge.textContent = `${data.columns.length} columns`;
@@ -4789,11 +5429,14 @@ CHAT_HTML_CONTENT = r"""<!DOCTYPE html>
           const defVal = col.default_value ? `<code style="font-size:0.75rem; color:var(--text-muted);">${escapeHtml(col.default_value)}</code>` : '—';
 
           tr.innerHTML = `
-            <td><strong style="color: var(--accent); font-family: monospace;">${col.name}</strong></td>
-            <td><span style="font-family: monospace; font-size: 0.78rem; font-weight: 600; color: #38bdf8;">${col.type}</span></td>
+            <td><strong style="color: var(--accent); font-family: monospace;">${escapeHtml(col.name)}</strong></td>
+            <td><span style="font-family: monospace; font-size: 0.78rem; font-weight: 600; color: #38bdf8;">${escapeHtml(col.type)}</span></td>
             <td>${pkBadge}</td>
             <td>${nullText}</td>
             <td>${defVal}</td>
+            <td style="text-align: center;">
+              <button type="button" class="btn-danger-action" style="padding: 2px 8px; font-size: 0.72rem;" onclick="confirmDropColumn('${escapeHtml(col.name)}')" title="Drop column">🗑️ Drop</button>
+            </td>
           `;
           tbody.appendChild(tr);
         });
@@ -4801,7 +5444,7 @@ CHAT_HTML_CONTENT = r"""<!DOCTYPE html>
     } catch (err) {
       console.error('Failed to load schema:', err);
       if (tbody) {
-        tbody.innerHTML = `<tr><td colspan="5" style="text-align: center; color: var(--danger); padding: 1.5rem;">⚠️ ${escapeHtml(err.message)}</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="6" style="text-align: center; color: var(--danger); padding: 1.5rem;">⚠️ ${escapeHtml(err.message)}</td></tr>`;
       }
     }
   }
