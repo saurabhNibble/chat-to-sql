@@ -337,7 +337,7 @@ class BattlegroundService:
 
                 client = OpenAI(
                     api_key=api_key,
-                    base_url=settings.LLM_BASE_URL,
+                    base_url=settings.active_llm_base_url,
                 )
                 prompt = (
                     f"Challenge: {q['title']}\n"
@@ -380,7 +380,7 @@ class BattlegroundService:
                         specific_critique=data.get("critique"),
                     )
             except Exception as exc:
-                logger.warning(f"Groq hint generation failed: {exc}")
+                logger.warning(f"Gemini hint generation failed: {exc}")
 
         # Curated Fallback
         hint_text = (
@@ -408,7 +408,7 @@ class BattlegroundService:
 
                 client = OpenAI(
                     api_key=api_key,
-                    base_url=settings.LLM_BASE_URL,
+                    base_url=settings.active_llm_base_url,
                 )
                 prompt = (
                     f"Challenge: {q['title']}\n"
@@ -450,7 +450,7 @@ class BattlegroundService:
                         memory_efficiency_tip=data.get("memory_efficiency") or q["memory_efficiency_tip"],
                     )
             except Exception as exc:
-                logger.warning(f"Groq solution generation failed: {exc}")
+                logger.warning(f"Gemini solution generation failed: {exc}")
 
         return SolutionResponse(
             question_id=question_id,

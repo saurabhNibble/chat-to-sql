@@ -10,10 +10,18 @@ from app.models.admin import (
     CsvImportResponse,
     CsvPreviewResponse,
     DatabaseInfo,
+    DeleteResponse,
+    DeleteRowRequest,
+    MultiCsvImportResponse,
     MultiSheetImportResponse,
+    SwitchDatabaseRequest,
+    SwitchDatabaseResponse,
     TableInfo,
+    TableRecordsResponse,
+    TableSchemaResponse,
 )
 from app.services.csv_ingestion import csv_ingestion_service, is_excel_file
+from app.services.db_explorer import db_explorer_service
 
 router = APIRouter()
 settings = get_settings()
@@ -201,52 +209,29 @@ async def import_all_sheets(
 
 
 @router.get(
+    "/databases",
+    response_model=list[DatabaseInfo],
+    summary="List available PostgreSQL databases on the server",
+)
+def list_databases():
+    try:
+        return db_explorer_service.list_databases()
+    except Exception as exc:
+        logger.error(f"Failed to list databases: {exc}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to list databases: {str(exc)}",
+        )
+
+
+@router.get(
     "/tables",
     response_model=list[TableInfo],
-    summary="List all tables, column lists, and row counts in current PostgreSQL DB",
+    summary="List all tables, column lists, and row counts in specified or active PostgreSQL DB",
 )
-def list_tables():
+def list_tables(db_name: str | None = None):
     try:
-        with get_db_connection() as conn:
-            with conn.cursor() as cur:
-                cur.execute(
-                    """
-                    SELECT t.table_name
-                    FROM information_schema.tables t
-                    WHERE t.table_schema = 'public'
-                      AND t.table_type = 'BASE TABLE'
-                    ORDER BY t.table_name;
-                    """
-                )
-                tables = [r[0] for r in cur.fetchall()]
-
-                table_infos: list[TableInfo] = []
-                for table in tables:
-                    cur.execute(
-                        """
-                        SELECT column_name
-                        FROM information_schema.columns
-                        WHERE table_schema = 'public' AND table_name = %s
-                        ORDER BY ordinal_position;
-                        """,
-                        (table,),
-                    )
-                    cols = [r[0] for r in cur.fetchall()]
-
-                    try:
-                        cur.execute(f'SELECT COUNT(*) FROM "{table}";')
-                        count = cur.fetchone()[0]
-                    except Exception:
-                        count = 0
-
-                    table_infos.append(
-                        TableInfo(
-                            table_name=table,
-                            columns=cols,
-                            row_count=count,
-                        )
-                    )
-                return table_infos
+        return db_explorer_service.list_tables(db_name)
     except Exception as exc:
         logger.error(f"Failed to list tables: {exc}")
         raise HTTPException(
@@ -256,31 +241,255 @@ def list_tables():
 
 
 @router.get(
-    "/databases",
-    response_model=list[DatabaseInfo],
-    summary="List available PostgreSQL databases on the server",
+    "/tables/{table_name}/schema",
+    response_model=TableSchemaResponse,
+    summary="Inspect detailed column schema (types, nullability, defaults, primary keys)",
 )
-def list_databases():
+def get_table_schema(table_name: str, db_name: str | None = None):
     try:
-        with get_db_connection() as conn:
-            with conn.cursor() as cur:
-                cur.execute(
-                    """
-                    SELECT datname
-                    FROM pg_database
-                    WHERE datistemplate = false
-                    ORDER BY datname;
-                    """
-                )
-                dbs = [r[0] for r in cur.fetchall()]
-                current_db = settings.DB_NAME
-                return [
-                    DatabaseInfo(
-                        database_name=d,
-                        is_current=(d.lower() == current_db.lower()),
-                    )
-                    for d in dbs
-                ]
+        return db_explorer_service.get_table_schema(db_name, table_name)
+    except ValueError as val_err:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=str(val_err),
+        )
     except Exception as exc:
-        logger.warning(f"Failed to list databases: {exc}")
-        return [DatabaseInfo(database_name=settings.DB_NAME, is_current=True)]
+        logger.error(f"Failed to inspect table schema: {exc}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to inspect table schema: {str(exc)}",
+        )
+
+
+@router.get(
+    "/tables/{table_name}/records",
+    response_model=TableRecordsResponse,
+    summary="Fetch paginated live records from the selected table in read-only mode",
+)
+def get_table_records(
+    table_name: str,
+    db_name: str | None = None,
+    limit: int = 50,
+    offset: int = 0,
+):
+    try:
+        return db_explorer_service.get_table_records(db_name, table_name, limit=limit, offset=offset)
+    except Exception as exc:
+        logger.error(f"Failed to fetch table records: {exc}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to fetch table records: {str(exc)}",
+        )
+
+
+@router.post(
+    "/switch-db",
+    response_model=SwitchDatabaseResponse,
+    summary="Switch the active database for the ChatSQL engine and connection pool",
+)
+def switch_database(req: SwitchDatabaseRequest):
+    try:
+        from app.db.connection import switch_active_database
+
+        clean_name = req.database_name.strip()
+        switch_active_database(clean_name)
+        return SwitchDatabaseResponse(
+            status="success",
+            active_database=clean_name,
+            message=f"Active database successfully switched to '{clean_name}'. ChatSQL is now querying this database.",
+        )
+    except Exception as exc:
+        logger.error(f"Failed to switch database: {exc}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to switch database: {str(exc)}",
+        )
+
+
+@router.post(
+    "/import-multiple-csvs",
+    response_model=MultiCsvImportResponse,
+    summary="Batch upload and import multiple CSV or Excel files into PostgreSQL as separate tables",
+)
+async def import_multiple_csvs(
+    files: list[UploadFile] = File(..., description="List of CSV or Excel files to import"),
+    db_name: str | None = Form(default=None, description="Target PostgreSQL database name"),
+    mode: str = Form(default="replace", description="Conflict mode: 'replace', 'fail', or 'append'"),
+):
+    if not files:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="At least one file is required.",
+        )
+
+    prepared_files: list[tuple[str, bytes]] = []
+    for f in files:
+        if not f.filename:
+            continue
+        content = await f.read()
+        if not content:
+            continue
+        if not is_valid_dataset_file(f.filename, content):
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"File '{f.filename}' is not a valid CSV or Excel file.",
+            )
+        prepared_files.append((f.filename, content))
+
+    if not prepared_files:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="No valid file contents received.",
+        )
+
+    try:
+        result = csv_ingestion_service.ingest_multiple_files(
+            files=prepared_files,
+            db_name=db_name or settings.DB_NAME,
+            mode=mode,
+        )
+        return result
+    except ValueError as val_err:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(val_err),
+        )
+    except Exception as exc:
+        logger.error(f"Failed to batch import files: {exc}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to batch import files: {str(exc)}",
+        )
+
+
+@router.delete(
+    "/databases/{database_name}",
+    response_model=DeleteResponse,
+    summary="Drop a PostgreSQL database after terminating active client connections",
+)
+def delete_database(database_name: str):
+    try:
+        db_explorer_service.drop_database(database_name)
+        return DeleteResponse(
+            status="success",
+            message=f"Database '{database_name}' was successfully dropped.",
+        )
+    except ValueError as val_err:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(val_err),
+        )
+    except Exception as exc:
+        logger.error(f"Failed to drop database '{database_name}': {exc}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to drop database: {str(exc)}",
+        )
+
+
+@router.delete(
+    "/tables/{table_name}",
+    response_model=DeleteResponse,
+    summary="Drop a table from the specified or active PostgreSQL database",
+)
+def delete_table(table_name: str, db_name: str | None = None, cascade: bool = True):
+    try:
+        db_explorer_service.drop_table(db_name, table_name, cascade=cascade)
+        return DeleteResponse(
+            status="success",
+            message=f"Table '{table_name}' was successfully dropped.",
+        )
+    except ValueError as val_err:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(val_err),
+        )
+    except Exception as exc:
+        logger.error(f"Failed to drop table '{table_name}': {exc}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to drop table: {str(exc)}",
+        )
+
+
+@router.delete(
+    "/tables/{table_name}/columns/{column_name}",
+    response_model=DeleteResponse,
+    summary="Drop a column from a table in the specified or active database",
+)
+def delete_column(
+    table_name: str,
+    column_name: str,
+    db_name: str | None = None,
+    cascade: bool = True,
+):
+    try:
+        db_explorer_service.drop_column(db_name, table_name, column_name, cascade=cascade)
+        return DeleteResponse(
+            status="success",
+            message=f"Column '{column_name}' was successfully dropped from '{table_name}'.",
+        )
+    except ValueError as val_err:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(val_err),
+        )
+    except Exception as exc:
+        logger.error(f"Failed to drop column '{column_name}' from '{table_name}': {exc}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to drop column: {str(exc)}",
+        )
+
+
+@router.post(
+    "/tables/{table_name}/rows/delete",
+    response_model=DeleteResponse,
+    summary="Delete specific rows matching a condition from a table",
+)
+def delete_rows(table_name: str, req: DeleteRowRequest):
+    try:
+        affected = db_explorer_service.delete_rows(req.database, table_name, req.condition)
+        return DeleteResponse(
+            status="success",
+            message=f"Successfully deleted {affected} row(s) from '{table_name}'.",
+            affected_count=affected,
+        )
+    except ValueError as val_err:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(val_err),
+        )
+    except Exception as exc:
+        logger.error(f"Failed to delete rows from '{table_name}': {exc}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to delete rows: {str(exc)}",
+        )
+
+
+@router.post(
+    "/tables/{table_name}/truncate",
+    response_model=DeleteResponse,
+    summary="Truncate (clear all rows) from a table",
+)
+def truncate_table(table_name: str, db_name: str | None = None, cascade: bool = True):
+    try:
+        db_explorer_service.truncate_table(db_name, table_name, cascade=cascade)
+        return DeleteResponse(
+            status="success",
+            message=f"Table '{table_name}' was successfully truncated.",
+        )
+    except ValueError as val_err:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(val_err),
+        )
+    except Exception as exc:
+        logger.error(f"Failed to truncate table '{table_name}': {exc}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to truncate table: {str(exc)}",
+        )
+
+
