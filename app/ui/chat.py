@@ -1726,6 +1726,262 @@ CHAT_HTML_CONTENT = r"""<!DOCTYPE html>
         width: 100%;
       }
     }
+
+    /* -------------------------------------------------------------
+       VIEW 3: ADMIN & CSV INGESTION STUDIO
+       ------------------------------------------------------------- */
+    #admin-view {
+      display: none;
+      width: 100%;
+      height: 100%;
+      overflow-y: auto;
+      flex-direction: column;
+      padding: 1.5rem;
+      gap: 1.5rem;
+      background: var(--bg-primary);
+    }
+
+    .admin-container {
+      max-width: 1100px;
+      margin: 0 auto;
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+      padding-bottom: 3rem;
+    }
+
+    .admin-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 1rem;
+      border-bottom: 1px solid var(--border-color);
+      padding-bottom: 1rem;
+    }
+
+    .admin-title-group h2 {
+      font-size: 1.35rem;
+      font-weight: 700;
+      color: var(--text-main);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .admin-title-group p {
+      font-size: 0.82rem;
+      color: var(--text-muted);
+      margin-top: 0.25rem;
+    }
+
+    .admin-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.25rem;
+    }
+    @media (max-width: 850px) {
+      .admin-grid { grid-template-columns: 1fr; }
+    }
+
+    .admin-card {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-color);
+      border-radius: 10px;
+      padding: 1.25rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    }
+
+    .admin-card-title {
+      font-size: 0.92rem;
+      font-weight: 600;
+      color: var(--accent);
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+
+    .admin-input-group {
+      display: flex;
+      flex-direction: column;
+      gap: 0.35rem;
+    }
+
+    .admin-input-group label {
+      font-size: 0.76rem;
+      font-weight: 600;
+      color: var(--text-dim);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .admin-input {
+      background: var(--bg-tertiary);
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      padding: 0.55rem 0.75rem;
+      color: var(--text-main);
+      font-size: 0.85rem;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    .admin-input:focus {
+      border-color: var(--accent);
+    }
+
+    .admin-dropzone {
+      border: 2px dashed var(--border-color);
+      border-radius: 8px;
+      background: rgba(30, 41, 59, 0.4);
+      padding: 1.75rem 1.25rem;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 0.4rem;
+    }
+    .admin-dropzone:hover, .admin-dropzone.dragover {
+      border-color: var(--accent);
+      background: rgba(56, 189, 248, 0.05);
+    }
+    .admin-dropzone-icon {
+      font-size: 2.2rem;
+    }
+    .admin-dropzone-text {
+      font-size: 0.88rem;
+      font-weight: 600;
+      color: var(--text-main);
+    }
+    .admin-dropzone-subtext {
+      font-size: 0.75rem;
+      color: var(--text-dim);
+    }
+
+    .admin-file-badge {
+      display: none;
+      align-items: center;
+      justify-content: space-between;
+      background: var(--bg-tertiary);
+      border: 1px solid var(--accent);
+      border-radius: 6px;
+      padding: 0.5rem 0.75rem;
+      font-size: 0.82rem;
+      color: var(--text-main);
+    }
+
+    .mode-options {
+      display: flex;
+      gap: 0.75rem;
+      flex-wrap: wrap;
+    }
+    .mode-label {
+      display: flex;
+      align-items: center;
+      gap: 0.35rem;
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      cursor: pointer;
+    }
+
+    .schema-preview-card {
+      display: none;
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-color);
+      border-radius: 10px;
+      padding: 1.25rem;
+      flex-direction: column;
+      gap: 1rem;
+    }
+
+    .table-scroll {
+      max-height: 280px;
+      overflow-y: auto;
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+    }
+    .admin-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.8rem;
+    }
+    .admin-table th {
+      background: var(--bg-tertiary);
+      padding: 0.5rem 0.75rem;
+      color: var(--text-dim);
+      font-weight: 600;
+      text-transform: uppercase;
+      font-size: 0.72rem;
+      position: sticky;
+      top: 0;
+      z-index: 2;
+      border-bottom: 1px solid var(--border-color);
+      white-space: nowrap;
+    }
+    .admin-table td {
+      padding: 0.45rem 0.75rem;
+      border-bottom: 1px solid var(--border-color);
+      color: var(--text-main);
+    }
+    .type-select {
+      background: var(--bg-elevated);
+      color: var(--accent);
+      border: 1px solid var(--border-color);
+      border-radius: 4px;
+      padding: 0.25rem 0.5rem;
+      font-size: 0.75rem;
+      font-weight: 600;
+      outline: none;
+    }
+
+    .btn-ingest-run {
+      background: linear-gradient(135deg, #0284c7, #2563eb);
+      color: white;
+      border: none;
+      border-radius: 6px;
+      padding: 0.65rem 1.4rem;
+      font-weight: 600;
+      font-size: 0.88rem;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      transition: all 0.2s;
+    }
+    .btn-ingest-run:hover {
+      box-shadow: 0 4px 12px rgba(2, 132, 199, 0.4);
+    }
+    .btn-ingest-run:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .alert-box {
+      border-radius: 6px;
+      padding: 0.75rem 1rem;
+      font-size: 0.85rem;
+      display: none;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.5rem;
+    }
+    .alert-success {
+      background: rgba(16, 185, 129, 0.15);
+      border: 1px solid var(--success);
+      color: #34d399;
+    }
+    .alert-error {
+      background: rgba(239, 68, 68, 0.15);
+      border: 1px solid var(--danger);
+      color: #f87171;
+    }
   </style>
 </head>
 <body>
@@ -1745,6 +2001,10 @@ CHAT_HTML_CONTENT = r"""<!DOCTYPE html>
       <button class="nav-mode-btn" id="tab-nav-battleground" onclick="switchView('battleground')">
         <span class="nav-text-full">⚔️ SQL Battleground (Top 50)</span>
         <span class="nav-text-short">⚔️ Arena</span>
+      </button>
+      <button class="nav-mode-btn" id="tab-nav-admin" onclick="switchView('admin')">
+        <span class="nav-text-full">🛠️ Data Studio (CSV Upload)</span>
+        <span class="nav-text-short">🛠️ Studio</span>
       </button>
     </div>
   </div>
@@ -1944,8 +2204,178 @@ CHAT_HTML_CONTENT = r"""<!DOCTYPE html>
 
 </div>
 
-<!-- Chrome "Ask Gemini"-Style AI Side Panel -->
-<div class="side-panel-backdrop" id="side-panel-backdrop" onclick="closeAiSidePanel()"></div>
+  <!-- =============================================================
+       VIEW 3: ADMIN & DATA STUDIO (AUTOMATED CSV INGESTION)
+       ============================================================= -->
+  <div id="admin-view" style="display: none;">
+    <div class="admin-container">
+      <div class="admin-header">
+        <div class="admin-title-group">
+          <h2>🛠️ Data Studio & CSV Ingestion Engine</h2>
+          <p>Define your database and table, upload any CSV, and let our engine automatically detect schema types and stream data into PostgreSQL.</p>
+        </div>
+        <div style="display: flex; gap: 0.5rem; align-items: center;">
+          <button class="btn-studio-action" onclick="loadAdminTables()">🔄 Refresh Tables</button>
+        </div>
+      </div>
+
+      <!-- Ingestion Setup Form -->
+      <div class="admin-grid">
+        <!-- Card 1: Destination Config -->
+        <div class="admin-card">
+          <div class="admin-card-title">🎯 1. Target Destination</div>
+          
+          <div class="admin-input-group">
+            <label for="admin-db-name">Target Database</label>
+            <input type="text" id="admin-db-name" class="admin-input" placeholder="e-commerce" value="e-commerce">
+            <span style="font-size: 0.72rem; color: var(--text-dim);">Database will be automatically created in PostgreSQL if it doesn't already exist.</span>
+          </div>
+
+          <div class="admin-input-group">
+            <label for="admin-table-name">Target Table Name</label>
+            <input type="text" id="admin-table-name" class="admin-input" placeholder="e.g. suppliers (auto-filled on file drop)">
+          </div>
+
+          <div class="admin-input-group">
+            <label>Table Mode / Conflict Policy</label>
+            <div class="mode-options">
+              <label class="mode-label">
+                <input type="radio" name="admin-mode" value="replace" checked>
+                <span>Replace (Drop & Recreate)</span>
+              </label>
+              <label class="mode-label">
+                <input type="radio" name="admin-mode" value="fail">
+                <span>Fail if Exists</span>
+              </label>
+              <label class="mode-label">
+                <input type="radio" name="admin-mode" value="append">
+                <span>Append Data</span>
+              </label>
+            </div>
+          </div>
+        </div>
+
+        <!-- Card 2: CSV / Excel Upload & File Dropzone -->
+        <div class="admin-card">
+          <div class="admin-card-title">📁 2. Upload CSV or Excel Dataset</div>
+          
+          <div class="admin-dropzone" id="admin-dropzone" onclick="document.getElementById('admin-csv-file').click()" ondragover="handleAdminDragOver(event)" ondragleave="handleAdminDragLeave(event)" ondrop="handleAdminDrop(event)">
+            <div class="admin-dropzone-icon">📄</div>
+            <div class="admin-dropzone-text">Click or drag & drop a .csv or .xlsx (Excel) file here</div>
+            <div class="admin-dropzone-subtext">Automatic type inference · Supports multi-sheet workbooks (e.g. carCategories, carModels)</div>
+            <input type="file" id="admin-csv-file" accept=".csv, .xlsx, .xls" style="display: none;" onchange="handleAdminFileSelected(event)">
+          </div>
+
+          <div class="admin-file-badge" id="admin-file-badge">
+            <div style="display: flex; align-items: center; gap: 0.5rem;">
+              <span id="badge-file-icon">📊</span>
+              <div>
+                <strong id="badge-filename">filename.csv</strong>
+                <div style="font-size: 0.72rem; color: var(--text-muted);" id="badge-filesize">0 KB</div>
+              </div>
+            </div>
+            <button class="btn-studio-action" style="padding: 0.2rem 0.5rem; font-size: 0.75rem;" onclick="resetAdminFile(event)">Remove</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Card 3: Auto-Detected Schema Preview & Confirmation -->
+      <div class="schema-preview-card" id="schema-preview-card">
+        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem;">
+          <div class="admin-card-title">🔍 3. Schema & Data Type Preview</div>
+          <div style="font-size: 0.8rem; color: var(--accent);" id="preview-metrics">Detected 0 columns · ~0 rows</div>
+        </div>
+
+        <!-- Excel Multi-Sheet Switcher Bar -->
+        <div id="excel-sheets-bar" style="display: none; align-items: center; gap: 0.6rem; flex-wrap: wrap; background: var(--bg-tertiary); padding: 0.6rem 0.85rem; border-radius: 8px; border: 1px solid var(--border-color);">
+          <span style="font-size: 0.76rem; font-weight: 700; color: var(--text-dim); text-transform: uppercase;">Sheets in Workbook:</span>
+          <div id="excel-sheets-pills" style="display: flex; gap: 0.4rem; flex-wrap: wrap;"></div>
+        </div>
+
+        <div style="font-size: 0.78rem; color: var(--text-muted);">
+          The engine automatically inferred the PostgreSQL column types below. You can adjust any type dropdown before running the ingestion:
+        </div>
+
+        <div class="table-scroll">
+          <table class="admin-table">
+            <thead>
+              <tr>
+                <th>Original Header</th>
+                <th>PostgreSQL Column</th>
+                <th>Inferred Type (Click to override)</th>
+                <th>Sample Value (Row 1)</th>
+              </tr>
+            </thead>
+            <tbody id="preview-schema-tbody">
+              <!-- Populated dynamically -->
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Sample Rows Data Preview -->
+        <div style="margin-top: 0.5rem;">
+          <div style="font-size: 0.76rem; font-weight: 600; color: var(--text-dim); text-transform: uppercase; margin-bottom: 0.35rem;">Sample Rows Preview (Top 5)</div>
+          <div class="table-scroll">
+            <table class="admin-table" id="preview-data-table">
+              <!-- Populated dynamically -->
+            </table>
+          </div>
+        </div>
+
+        <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1rem; margin-top: 0.5rem;">
+          <div style="display: flex; gap: 0.75rem; flex-wrap: wrap;">
+            <button class="btn-ingest-run" id="btn-run-ingest" onclick="executeCsvIngestion()">
+              <span>🚀</span> Stream This Sheet into PostgreSQL
+            </button>
+            <button class="btn-ingest-run" id="btn-run-all-sheets" style="display: none; background: linear-gradient(135deg, #059669, #10b981);" onclick="executeAllSheetsIngestion()">
+              <span>📦</span> Ingest ALL Sheets (Multiple Tables)
+            </button>
+          </div>
+          <div id="ingest-spinner-msg" style="font-size: 0.82rem; color: var(--text-muted); display: none;">
+            ⏳ Ingesting rows into PostgreSQL via streaming COPY...
+          </div>
+        </div>
+
+        <!-- Success & Error Alerts -->
+        <div class="alert-box alert-success" id="admin-alert-success">
+          <span id="alert-success-text">🎉 Data successfully imported!</span>
+          <button class="btn-studio-action" onclick="openChatWithNewTable()">💬 Chat with this Table ➔</button>
+        </div>
+        <div class="alert-box alert-error" id="admin-alert-error">
+          <span id="alert-error-text">❌ Ingestion error</span>
+        </div>
+      </div>
+
+      <!-- Card 4: Active Database Tables Inspector -->
+      <div class="admin-card" style="margin-top: 0.5rem;">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+          <div class="admin-card-title">🗄️ Active Tables in Database (<span id="active-db-label">e-commerce</span>)</div>
+          <span style="font-size: 0.75rem; color: var(--text-dim);">Auto-refreshed with schema cache</span>
+        </div>
+
+        <div class="table-scroll" style="max-height: 250px;">
+          <table class="admin-table">
+            <thead>
+              <tr>
+                <th>Table Name</th>
+                <th>Row Count</th>
+                <th>Columns</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody id="admin-tables-tbody">
+              <tr>
+                <td colspan="4" style="text-align: center; color: var(--text-dim);">Loading active tables...</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Chrome "Ask Gemini"-Style AI Side Panel -->
+  <div class="side-panel-backdrop" id="side-panel-backdrop" onclick="closeAiSidePanel()"></div>
 
 <aside class="ai-side-panel" id="ai-side-panel" aria-label="Groq AI SQL Assistant">
   <div class="side-panel-header">
@@ -2073,22 +2503,32 @@ CHAT_HTML_CONTENT = r"""<!DOCTYPE html>
     currentView = viewName;
     const chatView = document.getElementById('chat-view');
     const battlegroundView = document.getElementById('battleground-view');
+    const adminView = document.getElementById('admin-view');
     const tabChat = document.getElementById('tab-nav-chat');
     const tabBattle = document.getElementById('tab-nav-battleground');
+    const tabAdmin = document.getElementById('tab-nav-admin');
+
+    if (chatView) chatView.style.display = 'none';
+    if (battlegroundView) battlegroundView.style.display = 'none';
+    if (adminView) adminView.style.display = 'none';
+
+    if (tabChat) tabChat.classList.remove('active');
+    if (tabBattle) tabBattle.classList.remove('active');
+    if (tabAdmin) tabAdmin.classList.remove('active');
 
     if (viewName === 'battleground') {
-      chatView.style.display = 'none';
-      battlegroundView.style.display = 'flex';
-      tabBattle.classList.add('active');
-      tabChat.classList.remove('active');
+      if (battlegroundView) battlegroundView.style.display = 'flex';
+      if (tabBattle) tabBattle.classList.add('active');
       if (allBattlegroundQuestions.length === 0) {
         initBattleground();
       }
+    } else if (viewName === 'admin') {
+      if (adminView) adminView.style.display = 'flex';
+      if (tabAdmin) tabAdmin.classList.add('active');
+      loadAdminTables();
     } else {
-      battlegroundView.style.display = 'none';
-      chatView.style.display = 'flex';
-      tabChat.classList.add('active');
-      tabBattle.classList.remove('active');
+      if (chatView) chatView.style.display = 'flex';
+      if (tabChat) tabChat.classList.add('active');
     }
   }
 
@@ -3169,6 +3609,429 @@ CHAT_HTML_CONTENT = r"""<!DOCTYPE html>
       if (!isInDialog) dlg.close();
     });
   });
+
+  // =============================================================
+  // ADMIN & CSV INGESTION STUDIO LOGIC
+  // =============================================================
+  let selectedAdminFile = null;
+  let adminPreviewData = null;
+  let lastIngestedTable = null;
+
+  function handleAdminDragOver(e) {
+    e.preventDefault();
+    const zone = document.getElementById('admin-dropzone');
+    if (zone) zone.classList.add('dragover');
+  }
+
+  function handleAdminDragLeave(e) {
+    e.preventDefault();
+    const zone = document.getElementById('admin-dropzone');
+    if (zone) zone.classList.remove('dragover');
+  }
+
+  function handleAdminDrop(e) {
+    e.preventDefault();
+    const zone = document.getElementById('admin-dropzone');
+    if (zone) zone.classList.remove('dragover');
+    if (e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+      processAdminFile(e.dataTransfer.files[0]);
+    }
+  }
+
+  function handleAdminFileSelected(e) {
+    if (e.target && e.target.files && e.target.files.length > 0) {
+      processAdminFile(e.target.files[0]);
+    }
+  }
+
+  function resetAdminFile(e) {
+    if (e) e.stopPropagation();
+    selectedAdminFile = null;
+    adminPreviewData = null;
+    const fileInput = document.getElementById('admin-csv-file');
+    if (fileInput) fileInput.value = '';
+    const badge = document.getElementById('admin-file-badge');
+    if (badge) badge.style.display = 'none';
+    const previewCard = document.getElementById('schema-preview-card');
+    if (previewCard) previewCard.style.display = 'none';
+    const successAlert = document.getElementById('admin-alert-success');
+    if (successAlert) successAlert.style.display = 'none';
+    const errorAlert = document.getElementById('admin-alert-error');
+    if (errorAlert) errorAlert.style.display = 'none';
+  }
+
+  async function processAdminFile(file, sheetName = null) {
+    const fn = file.name.toLowerCase();
+    const isCsv = fn.endsWith('.csv');
+    const isExcel = fn.endsWith('.xlsx') || fn.endsWith('.xls') || fn.endsWith('.xlsm');
+    if (!isCsv && !isExcel) {
+      alert('Please select a valid CSV (.csv) or Excel (.xlsx, .xls) file.');
+      return;
+    }
+    selectedAdminFile = file;
+
+    // Show badge
+    const badge = document.getElementById('admin-file-badge');
+    const badgeName = document.getElementById('badge-filename');
+    const badgeSize = document.getElementById('badge-filesize');
+    const badgeIcon = document.getElementById('badge-file-icon');
+    if (badge && badgeName && badgeSize) {
+      badgeName.textContent = file.name;
+      const kb = (file.size / 1024).toFixed(1);
+      badgeSize.textContent = `${kb} KB`;
+      if (badgeIcon) badgeIcon.textContent = isExcel ? '📗' : '📊';
+      badge.style.display = 'flex';
+    }
+
+    // Hide old alerts
+    const successAlert = document.getElementById('admin-alert-success');
+    if (successAlert) successAlert.style.display = 'none';
+    const errorAlert = document.getElementById('admin-alert-error');
+    if (errorAlert) errorAlert.style.display = 'none';
+
+    // Call preview API
+    const formData = new FormData();
+    formData.append('file', file);
+    if (sheetName) {
+      formData.append('sheet_name', sheetName);
+    }
+
+    try {
+      const res = await fetch('/api/v1/admin/preview-csv', {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!res.ok) {
+        const errJson = await res.json().catch(() => ({}));
+        throw new Error(errJson.detail || 'Failed to inspect dataset schema.');
+      }
+
+      adminPreviewData = await res.json();
+      renderSchemaPreview(adminPreviewData);
+    } catch (err) {
+      console.error('Error previewing file:', err);
+      const errorAlert = document.getElementById('admin-alert-error');
+      const errorText = document.getElementById('alert-error-text');
+      if (errorAlert && errorText) {
+        errorText.textContent = `❌ ${err.message}`;
+        errorAlert.style.display = 'flex';
+      }
+    }
+  }
+
+  function renderSchemaPreview(data) {
+    const tableInput = document.getElementById('admin-table-name');
+    if (tableInput) {
+      tableInput.value = data.suggested_table_name;
+    }
+
+    const metrics = document.getElementById('preview-metrics');
+    if (metrics) {
+      const sheetInfo = data.active_sheet ? ` · Sheet: "${data.active_sheet}"` : '';
+      metrics.textContent = `Detected ${data.total_columns} columns · ~${data.estimated_rows.toLocaleString()} rows${sheetInfo}`;
+    }
+
+    // Multi-sheet bar & Batch Button
+    const sheetsBar = document.getElementById('excel-sheets-bar');
+    const sheetsPills = document.getElementById('excel-sheets-pills');
+    const btnAllSheets = document.getElementById('btn-run-all-sheets');
+
+    if (data.is_excel && data.sheet_names && data.sheet_names.length > 1) {
+      if (sheetsBar && sheetsPills) {
+        sheetsPills.innerHTML = '';
+        data.sheet_names.forEach(sheet => {
+          const btn = document.createElement('button');
+          const isActive = sheet === data.active_sheet;
+          btn.className = 'btn-studio-action';
+          btn.style.cssText = isActive
+            ? 'background: var(--accent); color: #0b0f19; font-weight: 700; border-color: var(--accent);'
+            : 'background: var(--bg-elevated); color: var(--text-muted); border-color: var(--border-color);';
+          btn.textContent = `📄 ${sheet}`;
+          btn.onclick = () => processAdminFile(selectedAdminFile, sheet);
+          sheetsPills.appendChild(btn);
+        });
+        sheetsBar.style.display = 'flex';
+      }
+      if (btnAllSheets) {
+        btnAllSheets.style.display = 'inline-flex';
+        btnAllSheets.innerHTML = `<span>📦</span> Ingest ALL ${data.sheet_names.length} Sheets (Multiple Tables)`;
+      }
+    } else {
+      if (sheetsBar) sheetsBar.style.display = 'none';
+      if (btnAllSheets) btnAllSheets.style.display = 'none';
+    }
+
+    // Populate Schema Mapping Table
+    const tbody = document.getElementById('preview-schema-tbody');
+    if (tbody) {
+      tbody.innerHTML = '';
+      const supportedTypes = data.supported_types || ['TEXT', 'INTEGER', 'BIGINT', 'NUMERIC', 'BOOLEAN', 'DATE', 'TIMESTAMPTZ', 'UUID', 'JSONB'];
+
+      data.columns.forEach((col) => {
+        const tr = document.createElement('tr');
+
+        // Sample value
+        let sampleVal = '';
+        if (data.sample_rows && data.sample_rows.length > 0) {
+          sampleVal = data.sample_rows[0][col.sanitized_name] ?? '';
+        }
+
+        let selectHtml = `<select class="type-select" data-col="${col.sanitized_name}">`;
+        supportedTypes.forEach(t => {
+          const selected = t === col.inferred_type ? 'selected' : '';
+          selectHtml += `<option value="${t}" ${selected}>${t}</option>`;
+        });
+        selectHtml += '</select>';
+
+        tr.innerHTML = `
+          <td style="color: var(--text-dim);">${col.original_name}</td>
+          <td><code style="color: var(--accent); font-weight: 600;">${col.sanitized_name}</code></td>
+          <td>${selectHtml}</td>
+          <td style="max-width: 250px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-family: monospace; font-size: 0.75rem; color: var(--text-muted);">${sampleVal}</td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    // Populate Top 5 Sample Rows Table
+    const dataTable = document.getElementById('preview-data-table');
+    if (dataTable && data.sample_rows && data.sample_rows.length > 0) {
+      const colNames = data.columns.map(c => c.sanitized_name);
+      let theadHtml = '<thead><tr>' + colNames.map(c => `<th>${c}</th>`).join('') + '</tr></thead>';
+      let tbodyHtml = '<tbody>';
+      data.sample_rows.forEach(row => {
+        tbodyHtml += '<tr>';
+        colNames.forEach(c => {
+          tbodyHtml += `<td style="font-family: monospace; font-size: 0.75rem;">${row[c] ?? ''}</td>`;
+        });
+        tbodyHtml += '</tr>';
+      });
+      tbodyHtml += '</tbody>';
+      dataTable.innerHTML = theadHtml + tbodyHtml;
+    }
+
+    const previewCard = document.getElementById('schema-preview-card');
+    if (previewCard) previewCard.style.display = 'flex';
+  }
+
+  async function executeAllSheetsIngestion() {
+    if (!selectedAdminFile) {
+      alert('Please select an Excel file first.');
+      return;
+    }
+
+    const dbInput = document.getElementById('admin-db-name');
+    const modeRadio = document.querySelector('input[name="admin-mode"]:checked');
+    const dbName = dbInput ? dbInput.value.trim() : 'e-commerce';
+    const mode = modeRadio ? modeRadio.value : 'replace';
+
+    const runBtn = document.getElementById('btn-run-ingest');
+    const btnAllSheets = document.getElementById('btn-run-all-sheets');
+    const spinnerMsg = document.getElementById('ingest-spinner-msg');
+    const successAlert = document.getElementById('admin-alert-success');
+    const errorAlert = document.getElementById('admin-alert-error');
+
+    if (runBtn) runBtn.disabled = true;
+    if (btnAllSheets) btnAllSheets.disabled = true;
+    if (spinnerMsg) {
+      spinnerMsg.textContent = '⏳ Batch streaming all Excel sheets into PostgreSQL tables...';
+      spinnerMsg.style.display = 'block';
+    }
+    if (successAlert) successAlert.style.display = 'none';
+    if (errorAlert) errorAlert.style.display = 'none';
+
+    const formData = new FormData();
+    formData.append('file', selectedAdminFile);
+    formData.append('db_name', dbName);
+    formData.append('mode', mode);
+
+    try {
+      const res = await fetch('/api/v1/admin/import-all-sheets', {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!res.ok) {
+        const errJson = await res.json().catch(() => ({}));
+        throw new Error(errJson.detail || 'Batch ingestion failed.');
+      }
+
+      const result = await res.json();
+      lastIngestedTable = result.tables.length > 0 ? result.tables[0].table : null;
+
+      if (successAlert) {
+        const succText = document.getElementById('alert-success-text');
+        if (succText) {
+          const tableSummaries = result.tables.map(t => `${t.table} (${t.rows_inserted.toLocaleString()} rows)`).join(', ');
+          succText.textContent = `🎉 Batch Ingestion Complete! Successfully created ${result.tables.length} tables [${tableSummaries}] in database "${result.database}" (${result.total_rows_inserted.toLocaleString()} total rows).`;
+        }
+        successAlert.style.display = 'flex';
+      }
+
+      loadAdminTables();
+      if (typeof fetchSchemaOverview === 'function') {
+        fetchSchemaOverview();
+      }
+    } catch (err) {
+      console.error('Batch ingestion error:', err);
+      if (errorAlert) {
+        const errorText = document.getElementById('alert-error-text');
+        if (errorText) errorText.textContent = `❌ ${err.message}`;
+        errorAlert.style.display = 'flex';
+      }
+    } finally {
+      if (runBtn) runBtn.disabled = false;
+      if (btnAllSheets) btnAllSheets.disabled = false;
+      if (spinnerMsg) spinnerMsg.style.display = 'none';
+    }
+  }
+
+  async function executeCsvIngestion() {
+    if (!selectedAdminFile) {
+      alert('Please select a CSV or Excel file first.');
+      return;
+    }
+
+    const dbInput = document.getElementById('admin-db-name');
+    const tableInput = document.getElementById('admin-table-name');
+    const modeRadio = document.querySelector('input[name="admin-mode"]:checked');
+
+    const dbName = dbInput ? dbInput.value.trim() : 'e-commerce';
+    const tableName = tableInput ? tableInput.value.trim() : '';
+    const mode = modeRadio ? modeRadio.value : 'replace';
+
+    if (!tableName) {
+      alert('Please specify a target table name.');
+      if (tableInput) tableInput.focus();
+      return;
+    }
+
+    // Collect custom/inferred column types
+    const typeSelects = document.querySelectorAll('.type-select');
+    const customTypes = {};
+    typeSelects.forEach(s => {
+      const col = s.getAttribute('data-col');
+      if (col) customTypes[col] = s.value;
+    });
+
+    const runBtn = document.getElementById('btn-run-ingest');
+    const btnAllSheets = document.getElementById('btn-run-all-sheets');
+    const spinnerMsg = document.getElementById('ingest-spinner-msg');
+    const successAlert = document.getElementById('admin-alert-success');
+    const errorAlert = document.getElementById('admin-alert-error');
+
+    if (runBtn) runBtn.disabled = true;
+    if (btnAllSheets) btnAllSheets.disabled = true;
+    if (spinnerMsg) {
+      spinnerMsg.textContent = '⏳ Ingesting rows into PostgreSQL via streaming COPY...';
+      spinnerMsg.style.display = 'block';
+    }
+    if (successAlert) successAlert.style.display = 'none';
+    if (errorAlert) errorAlert.style.display = 'none';
+
+    const formData = new FormData();
+    formData.append('file', selectedAdminFile);
+    formData.append('db_name', dbName);
+    formData.append('table_name', tableName);
+    formData.append('mode', mode);
+    formData.append('column_types', JSON.stringify(customTypes));
+    if (adminPreviewData && adminPreviewData.active_sheet) {
+      formData.append('sheet_name', adminPreviewData.active_sheet);
+    }
+
+    try {
+      const res = await fetch('/api/v1/admin/import-csv', {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!res.ok) {
+        const errJson = await res.json().catch(() => ({}));
+        throw new Error(errJson.detail || 'Ingestion failed on database server.');
+      }
+
+      const result = await res.json();
+      lastIngestedTable = result.table;
+
+      // Show success
+      if (successAlert) {
+        const succText = document.getElementById('alert-success-text');
+        if (succText) {
+          succText.textContent = `🎉 Ingestion Complete! Successfully streamed ${result.rows_inserted.toLocaleString()} rows into "${result.database}.${result.table}".`;
+        }
+        successAlert.style.display = 'flex';
+      }
+
+      // Refresh tables list
+      loadAdminTables();
+
+      // Trigger schema cache refresh on server
+      if (typeof fetchSchemaOverview === 'function') {
+        fetchSchemaOverview();
+      }
+    } catch (err) {
+      console.error('Ingestion error:', err);
+      if (errorAlert) {
+        const errorText = document.getElementById('alert-error-text');
+        if (errorText) errorText.textContent = `❌ ${err.message}`;
+        errorAlert.style.display = 'flex';
+      }
+    } finally {
+      if (runBtn) runBtn.disabled = false;
+      if (spinnerMsg) spinnerMsg.style.display = 'none';
+    }
+  }
+
+  function openChatWithNewTable(tableName) {
+    const targetTable = tableName || lastIngestedTable || 'the new table';
+    switchView('chat');
+    const input = document.getElementById('prompt-input');
+    if (input) {
+      input.value = `Show the first 5 records from ${targetTable}`;
+      input.focus();
+    }
+  }
+
+  async function loadAdminTables() {
+    const tbody = document.getElementById('admin-tables-tbody');
+    const activeDbLabel = document.getElementById('active-db-label');
+    const dbInput = document.getElementById('admin-db-name');
+    if (activeDbLabel && dbInput && dbInput.value) {
+      activeDbLabel.textContent = dbInput.value;
+    }
+
+    try {
+      const res = await fetch('/api/v1/admin/tables');
+      if (!res.ok) return;
+      const tables = await res.json();
+
+      if (!tbody) return;
+      tbody.innerHTML = '';
+
+      if (tables.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="4" style="text-align: center; color: var(--text-dim); padding: 1rem;">No tables found in public schema.</td></tr>';
+        return;
+      }
+
+      tables.forEach(t => {
+        const tr = document.createElement('tr');
+        const colList = t.columns.map(c => `<span style="display: inline-block; background: var(--bg-primary); border: 1px solid var(--border-color); border-radius: 4px; padding: 1px 5px; margin: 1px; font-size: 0.72rem; color: var(--text-muted); font-family: monospace;">${c}</span>`).join(' ');
+
+        tr.innerHTML = `
+          <td><strong style="color: var(--accent);">${t.table_name}</strong></td>
+          <td><span style="background: rgba(16, 185, 129, 0.15); color: #34d399; padding: 2px 8px; border-radius: 12px; font-size: 0.75rem; font-weight: 600;">${t.row_count.toLocaleString()} rows</span></td>
+          <td style="max-width: 450px; overflow-x: auto;">${colList}</td>
+          <td>
+            <button class="btn-studio-action" style="padding: 0.25rem 0.6rem; font-size: 0.75rem;" onclick="openChatWithNewTable('${t.table_name}')">💬 Query</button>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+    } catch (err) {
+      console.warn('Failed to load tables list:', err);
+    }
+  }
 
   // Initialize
   checkCurrentUser();

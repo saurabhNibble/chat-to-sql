@@ -26,27 +26,31 @@ chat-to-sql/
 │   │   ├── connection.py        # Threaded connection pooling & read-only session controls
 │   │   └── schema.py            # Dynamic schema introspection with TTL caching
 │   ├── models/
+│   │   ├── admin.py             # Pydantic models for CSV preview, ingestion & table metadata
 │   │   └── query.py             # Pydantic v2 domain schemas (requests, responses, errors)
 │   ├── services/
 │   │   ├── clarification.py     # Morphological ambiguity detection service
 │   │   ├── conversation.py      # Multi-turn chat memory & clarification resolution service
-│   │   ├── sql_generator.py     # Schema-aware SQL generator (OpenAI LLM + rule-based fallback)
+│   │   ├── csv_ingestion.py     # Schema inference, type detection & PostgreSQL bulk COPY ingestion
+│   │   ├── sql_generator.py     # Schema-aware SQL generator (Groq/OpenAI LLM + rule-based fallback)
 │   │   ├── sql_validator.py     # AST-level query validation using sqlglot
 │   │   └── query_service.py     # Orchestrator coordinating business workflow
 │   ├── ui/
-│   │   └── chat.py              # Self-contained modern responsive Web Chat UI
+│   │   └── chat.py              # Self-contained modern responsive Web Chat UI & Data Studio
 │   └── api/
 │       ├── deps.py              # FastAPI dependency injection providers
 │       └── v1/
 │           ├── router.py        # API v1 aggregator
 │           └── endpoints/
+│               ├── admin.py     # CSV preview & streaming PostgreSQL ingestion endpoints
 │               ├── health.py    # Health check & database probe
 │               └── query.py     # Text-to-SQL execution endpoint
 ├── scripts/
+│   ├── import_csv.py            # CLI tool for automated CSV to PostgreSQL ingestion
 │   └── inspect_db.py            # Database schema inspection CLI utility
 ├── tests/
-│   ├── integration/             # FastAPI TestClient API integration test suite
-│   └── unit/                    # Unit tests for clarification, conversation, security, and AST validator
+│   ├── integration/             # FastAPI TestClient API integration test suite (query, admin, battleground)
+│   └── unit/                    # Unit tests for clarification, conversation, security, CSV ingestion, and AST validator
 ├── docker/
 │   └── init.sql                 # Sample e-commerce database schema and initial data
 ├── .github/
@@ -213,6 +217,43 @@ ruff check .
 
 ---
 
+## 🛠️ Data Studio: Automated CSV & Multi-Sheet Excel Ingestion
+
+ChatSQL Pro includes an enterprise-grade automated data ingestion pipeline that lets administrators upload raw CSV or multi-sheet Excel workbooks (`.xlsx`, `.xls`) and load them into PostgreSQL with **zero manual schema definition**.
+
+### Key Capabilities:
+- **Multi-Sheet Excel Support (e.g. `carDB.xlsx`)**:
+  - Automatically detects all worksheets (e.g., `carCategories` and `carModels`).
+  - Converts camelCase/PascalCase sheet names to idiomatic PostgreSQL snake_case tables (`car_categories`, `car_models`).
+  - Interactive sheet selector bar in the UI allows switching between sheets to preview columns and data types.
+  - 1-click **"Ingest ALL Sheets"** creates multiple relational tables in PostgreSQL simultaneously.
+- **Intelligent Type Detection**:
+  - Analyzes column data to infer: `BOOLEAN`, `INTEGER`, `BIGINT`, `NUMERIC`, `DATE`, `TIMESTAMPTZ`, `UUID`, `JSONB`, and `TEXT`.
+  - **Leading Zero Preservation**: Protects ZIP codes, phone numbers, and IDs (e.g. `01234`) from being coerced into numbers.
+- **SQL Injection Defense**:
+  - Identifiers (database names, table names, and column headers) are sanitized and safely quoted using `psycopg2.sql.Identifier`.
+- **Database Auto-Provisioning**:
+  - If the specified database doesn't exist, the engine connects to the PostgreSQL maintenance database and provisions it automatically.
+- **High-Performance Streaming Bulk Loading**:
+  - Uses PostgreSQL's native streaming **`COPY FROM STDIN WITH CSV`** protocol inside an atomic transaction (`BEGIN` -> `COPY` -> `COMMIT`), ingesting **50,000+ rows in <2 seconds**.
+- **Interactive UI Review & Overrides**:
+  - In the web app's **🛠️ Data Studio (CSV Upload)** tab, admins can preview detected types, customize any column via dropdowns, inspect the first 5 sample rows, and choose conflict policies (`Replace`, `Fail if exists`, `Append`).
+- **Instant Schema Sync**:
+  - Automatically refreshes the schema cache upon completion so all newly created tables can be queried and joined in the chat tutor immediately.
+
+### CLI Usage
+You can also run automated imports directly from the command line:
+
+```bash
+# Ingest single CSV or Excel sheet:
+python scripts/import_csv.py path/to/dataset.csv --db e-commerce --table sales --mode replace
+
+# Ingest an entire multi-sheet Excel workbook (all sheets as separate tables):
+python scripts/import_csv.py path/to/carDB.xlsx --db e-commerce --all-sheets --mode replace
+```
+
+---
+
 ## 📡 API Reference
 
 Interactive OpenAPI documentation is accessible at:
@@ -226,6 +267,11 @@ Interactive OpenAPI documentation is accessible at:
 | `GET` | `/` | Root Redirect | Redirects to interactive documentation (`/docs`) |
 | `GET` | `/api/v1/health` | Health Check | Verifies service & PostgreSQL pool readiness |
 | `POST` | `/api/v1/query` | Text-to-SQL | Translates prompt, resolves ambiguities, & runs query |
+| `POST` | `/api/v1/admin/preview-csv` | File Preview | Inspects CSV or Excel sheet, auto-detects schema & returns top 5 rows |
+| `POST` | `/api/v1/admin/import-csv` | Single Ingestion | Bulk loads CSV or specific Excel sheet into PostgreSQL via streaming COPY |
+| `POST` | `/api/v1/admin/import-all-sheets` | Batch Ingestion | Ingests all sheets from an Excel workbook as separate relational tables |
+| `GET` | `/api/v1/admin/tables` | Database Tables | Lists all tables, column metadata & row counts |
+| `GET` | `/api/v1/admin/databases` | Databases List | Lists available PostgreSQL databases on the server |
 
 #### Example Query Request
 ```bash

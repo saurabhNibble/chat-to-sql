@@ -6,6 +6,9 @@ uvicorn[standard]>=0.30.0
 pydantic>=2.8.0
 pydantic-settings>=2.4.0
 python-dotenv>=1.0.0
+python-multipart>=0.0.9
+pandas>=2.0.0
+openpyxl>=3.1.0
 
 # Database & SQL Parsing
 psycopg2-binary>=2.9.9
