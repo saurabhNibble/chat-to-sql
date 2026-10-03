@@ -1982,6 +1982,367 @@ CHAT_HTML_CONTENT = r"""<!DOCTYPE html>
       border: 1px solid var(--danger);
       color: #f87171;
     }
+
+    /* Studio Subnav and Database Explorer */
+    .studio-subnav {
+      display: flex;
+      gap: 0.75rem;
+      border-bottom: 1px solid var(--border-color);
+      padding-bottom: 0.75rem;
+      margin-bottom: 0.25rem;
+    }
+    .studio-subnav-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      padding: 0.6rem 1.1rem;
+      color: var(--text-dim);
+      font-size: 0.86rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .studio-subnav-btn:hover {
+      color: var(--text-main);
+      border-color: var(--accent);
+    }
+    .studio-subnav-btn.active {
+      background: var(--bg-elevated);
+      color: var(--accent);
+      border-color: var(--accent);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+    }
+    .studio-subnav-badge {
+      font-size: 0.7rem;
+      padding: 0.15rem 0.45rem;
+      border-radius: 9999px;
+      background: rgba(56, 189, 248, 0.12);
+      color: var(--accent);
+    }
+    .explorer-top-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 1rem;
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-color);
+      border-radius: 10px;
+      padding: 0.85rem 1.25rem;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    }
+    .explorer-db-picker {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      flex-wrap: wrap;
+    }
+    .explorer-select {
+      background: var(--bg-tertiary);
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      padding: 0.5rem 0.8rem;
+      color: var(--text-main);
+      font-size: 0.86rem;
+      font-weight: 600;
+      outline: none;
+      cursor: pointer;
+      min-width: 190px;
+      transition: border-color 0.2s;
+    }
+    .explorer-select:focus {
+      border-color: var(--accent);
+    }
+    .explorer-db-status {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      font-size: 0.76rem;
+      padding: 0.25rem 0.65rem;
+      border-radius: 9999px;
+      font-weight: 600;
+    }
+    .db-status-active {
+      background: rgba(16, 185, 129, 0.15);
+      color: #34d399;
+      border: 1px solid rgba(16, 185, 129, 0.3);
+    }
+    .db-status-standby {
+      background: rgba(148, 163, 184, 0.12);
+      color: var(--text-muted);
+      border: 1px solid var(--border-color);
+    }
+    .explorer-layout {
+      display: grid;
+      grid-template-columns: 310px 1fr;
+      gap: 1.25rem;
+      min-height: 520px;
+    }
+    @media (max-width: 900px) {
+      .explorer-layout {
+        grid-template-columns: 1fr;
+      }
+    }
+    .explorer-sidebar {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-color);
+      border-radius: 10px;
+      padding: 1rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    }
+    .explorer-search-input {
+      width: 100%;
+      background: var(--bg-tertiary);
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      padding: 0.5rem 0.75rem;
+      color: var(--text-main);
+      font-size: 0.82rem;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    .explorer-search-input:focus {
+      border-color: var(--accent);
+    }
+    .explorer-table-list {
+      display: flex;
+      flex-direction: column;
+      gap: 0.4rem;
+      overflow-y: auto;
+      max-height: 480px;
+      padding-right: 0.2rem;
+    }
+    .explorer-table-btn {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0.55rem 0.75rem;
+      border-radius: 6px;
+      border: 1px solid transparent;
+      background: var(--bg-tertiary);
+      color: var(--text-main);
+      cursor: pointer;
+      text-align: left;
+      transition: all 0.15s;
+      font-size: 0.82rem;
+      gap: 0.5rem;
+    }
+    .explorer-table-btn:hover {
+      border-color: var(--accent);
+      background: rgba(56, 189, 248, 0.08);
+    }
+    .explorer-table-btn.active {
+      border-color: var(--accent);
+      background: rgba(56, 189, 248, 0.16);
+      color: var(--accent);
+      font-weight: 600;
+    }
+    .explorer-main {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-color);
+      border-radius: 10px;
+      padding: 1.25rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+      min-height: 520px;
+    }
+    .explorer-content-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+      border-bottom: 1px solid var(--border-color);
+      padding-bottom: 0.85rem;
+    }
+    .explorer-tab-group {
+      display: flex;
+      gap: 0.5rem;
+    }
+    .explorer-tab-btn {
+      background: var(--bg-tertiary);
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      padding: 0.4rem 0.85rem;
+      color: var(--text-dim);
+      font-size: 0.8rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .explorer-tab-btn:hover {
+      color: var(--text-main);
+    }
+    .explorer-tab-btn.active {
+      background: var(--bg-elevated);
+      color: var(--accent);
+      border-color: var(--accent);
+    }
+    .explorer-pagination-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+      padding: 0.25rem 0;
+    }
+    .null-pill {
+      font-size: 0.72rem;
+      font-style: italic;
+      color: var(--text-dim);
+      background: rgba(148, 163, 184, 0.1);
+      padding: 1px 4px;
+      border-radius: 3px;
+    }
+    .pk-badge {
+      background: rgba(234, 179, 8, 0.15);
+      color: #facc15;
+      border: 1px solid rgba(234, 179, 8, 0.3);
+      border-radius: 4px;
+      padding: 1px 5px;
+      font-size: 0.7rem;
+      font-weight: 700;
+    }
+
+    /* Danger Confirmation Modal */
+    .danger-modal-backdrop {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(15, 23, 42, 0.75);
+      backdrop-filter: blur(4px);
+      z-index: 10000;
+      align-items: center;
+      justify-content: center;
+      padding: 1rem;
+    }
+    .danger-modal-backdrop.open {
+      display: flex;
+    }
+    .danger-modal {
+      background: var(--bg-secondary);
+      border: 1px solid rgba(239, 68, 68, 0.4);
+      border-radius: 12px;
+      max-width: 480px;
+      width: 100%;
+      padding: 1.5rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+      box-shadow: 0 20px 45px rgba(0, 0, 0, 0.6);
+      animation: modalFadeIn 0.2s ease-out;
+    }
+    @keyframes modalFadeIn {
+      from { opacity: 0; transform: translateY(-10px) scale(0.98); }
+      to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+    .danger-modal-header {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+    .danger-modal-icon {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      background: rgba(239, 68, 68, 0.15);
+      color: #ef4444;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.25rem;
+      flex-shrink: 0;
+    }
+    .danger-modal-title {
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: var(--text-main);
+    }
+    .danger-modal-desc {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      line-height: 1.5;
+    }
+    .btn-danger-confirm {
+      background: linear-gradient(135deg, #ef4444, #dc2626);
+      color: white;
+      border: none;
+      border-radius: 6px;
+      padding: 0.55rem 1.25rem;
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .btn-danger-confirm:hover {
+      box-shadow: 0 4px 12px rgba(239, 68, 68, 0.4);
+    }
+    .btn-danger-confirm:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+      box-shadow: none;
+    }
+    .btn-danger-action {
+      background: rgba(239, 68, 68, 0.12);
+      color: #f87171;
+      border: 1px solid rgba(239, 68, 68, 0.3);
+      border-radius: 6px;
+      padding: 0.35rem 0.65rem;
+      font-size: 0.76rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+    }
+    .btn-danger-action:hover {
+      background: rgba(239, 68, 68, 0.25);
+      color: #fca5a5;
+      border-color: #ef4444;
+    }
+    .multi-files-container {
+      display: flex;
+      flex-direction: column;
+      gap: 0.45rem;
+      max-height: 180px;
+      overflow-y: auto;
+      padding-right: 0.25rem;
+    }
+    .file-tab-pill {
+      background: var(--bg-tertiary);
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      padding: 0.35rem 0.7rem;
+      font-size: 0.78rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      cursor: pointer;
+      transition: all 0.15s;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+    }
+    .file-tab-pill:hover {
+      color: var(--text-main);
+      border-color: var(--accent);
+    }
+    .file-tab-pill.active {
+      background: rgba(56, 189, 248, 0.15);
+      color: var(--accent);
+      border-color: var(--accent);
+    }
   </style>
 </head>
 <body>
@@ -2003,17 +2364,17 @@ CHAT_HTML_CONTENT = r"""<!DOCTYPE html>
         <span class="nav-text-short">⚔️ Arena</span>
       </button>
       <button class="nav-mode-btn" id="tab-nav-admin" onclick="switchView('admin')">
-        <span class="nav-text-full">🛠️ Data Studio (CSV Upload)</span>
-        <span class="nav-text-short">🛠️ Studio</span>
+        <span class="nav-text-full">🗄️ Database & Ingestion Studio</span>
+        <span class="nav-text-short">🗄️ Studio</span>
       </button>
     </div>
   </div>
 
   <div class="header-right">
     <div class="header-badges">
-      <span class="badge badge-db">
-        <span class="badge-text-full">🟢 PostgreSQL (34M Rows)</span>
-        <span class="badge-text-short">🟢 34M DB</span>
+      <span class="badge badge-db" id="header-db-badge">
+        <span class="badge-text-full" id="header-db-text-full">🟢 PostgreSQL (e-commerce)</span>
+        <span class="badge-text-short" id="header-db-text-short">🟢 e-commerce</span>
       </span>
       <span class="badge badge-ai">
         <span class="badge-text-full">⚡ AI SQL Mentor · Active</span>
@@ -2205,170 +2566,317 @@ CHAT_HTML_CONTENT = r"""<!DOCTYPE html>
 </div>
 
   <!-- =============================================================
-       VIEW 3: ADMIN & DATA STUDIO (AUTOMATED CSV INGESTION)
+       VIEW 3: ADMIN & DATA STUDIO (DATABASE EXPLORER + INGESTION)
        ============================================================= -->
   <div id="admin-view" style="display: none;">
     <div class="admin-container">
       <div class="admin-header">
         <div class="admin-title-group">
-          <h2>🛠️ Data Studio & CSV Ingestion Engine</h2>
-          <p>Define your database and table, upload any CSV, and let our engine automatically detect schema types and stream data into PostgreSQL.</p>
-        </div>
-        <div style="display: flex; gap: 0.5rem; align-items: center;">
-          <button class="btn-studio-action" onclick="loadAdminTables()">🔄 Refresh Tables</button>
+          <h2>🗄️ Database & Ingestion Studio</h2>
+          <p>Explore schemas and live records across any PostgreSQL database, or ingest new CSV / Excel datasets with automated schema detection.</p>
         </div>
       </div>
 
-      <!-- Ingestion Setup Form -->
-      <div class="admin-grid">
-        <!-- Card 1: Destination Config -->
-        <div class="admin-card">
-          <div class="admin-card-title">🎯 1. Target Destination</div>
-          
-          <div class="admin-input-group">
-            <label for="admin-db-name">Target Database</label>
-            <input type="text" id="admin-db-name" class="admin-input" placeholder="e-commerce" value="e-commerce">
-            <span style="font-size: 0.72rem; color: var(--text-dim);">Database will be automatically created in PostgreSQL if it doesn't already exist.</span>
-          </div>
+      <!-- Studio Sub-Navigation (Explorer vs Ingestion) -->
+      <div class="studio-subnav">
+        <button class="studio-subnav-btn active" id="subnav-btn-explorer" onclick="switchStudioTab('explorer')">
+          <span>🗄️</span>
+          <span>Database & Table Explorer</span>
+          <span class="studio-subnav-badge">Live Data & Schema</span>
+        </button>
+        <button class="studio-subnav-btn" id="subnav-btn-ingest" onclick="switchStudioTab('ingest')">
+          <span>📥</span>
+          <span>CSV & Excel Ingestion Engine</span>
+          <span class="studio-subnav-badge">Auto-Detect & Stream</span>
+        </button>
+      </div>
 
-          <div class="admin-input-group">
-            <label for="admin-table-name">Target Table Name</label>
-            <input type="text" id="admin-table-name" class="admin-input" placeholder="e.g. suppliers (auto-filled on file drop)">
+      <!-- ==========================================
+           SUB-PANE 1: DATABASE & TABLE EXPLORER
+           ========================================== -->
+      <div id="pane-explorer" style="display: flex; flex-direction: column; gap: 1rem;">
+        <!-- Top Bar: Database Selector & Switcher -->
+        <div class="explorer-top-bar">
+          <div class="explorer-db-picker">
+            <label for="explorer-db-select" style="font-size: 0.8rem; font-weight: 700; color: var(--text-dim); text-transform: uppercase;">Database:</label>
+            <select id="explorer-db-select" class="explorer-select" onchange="onExplorerDbChanged()">
+              <option value="" disabled selected>Loading databases...</option>
+            </select>
+            <span id="explorer-db-status" class="explorer-db-status db-status-active">🟢 Active Chat DB</span>
           </div>
-
-          <div class="admin-input-group">
-            <label>Table Mode / Conflict Policy</label>
-            <div class="mode-options">
-              <label class="mode-label">
-                <input type="radio" name="admin-mode" value="replace" checked>
-                <span>Replace (Drop & Recreate)</span>
-              </label>
-              <label class="mode-label">
-                <input type="radio" name="admin-mode" value="fail">
-                <span>Fail if Exists</span>
-              </label>
-              <label class="mode-label">
-                <input type="radio" name="admin-mode" value="append">
-                <span>Append Data</span>
-              </label>
-            </div>
+          <div style="display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap;">
+            <button class="btn-studio-action" id="btn-set-active-db" onclick="switchActiveChatDb()" style="display: none; background: rgba(56, 189, 248, 0.15); color: var(--accent); border-color: var(--accent);">
+              ⚡ Set as Active Chat DB
+            </button>
+            <button class="btn-studio-action" onclick="refreshExplorerData()">🔄 Refresh</button>
+            <button class="btn-danger-action" id="btn-delete-db" onclick="confirmDeleteDatabase()" title="Drop Database">
+              <span>🗑️</span> Delete DB
+            </button>
           </div>
         </div>
 
-        <!-- Card 2: CSV / Excel Upload & File Dropzone -->
-        <div class="admin-card">
-          <div class="admin-card-title">📁 2. Upload CSV or Excel Dataset</div>
-          
-          <div class="admin-dropzone" id="admin-dropzone" onclick="document.getElementById('admin-csv-file').click()" ondragover="handleAdminDragOver(event)" ondragleave="handleAdminDragLeave(event)" ondrop="handleAdminDrop(event)">
-            <div class="admin-dropzone-icon">📄</div>
-            <div class="admin-dropzone-text">Click or drag & drop a .csv or .xlsx (Excel) file here</div>
-            <div class="admin-dropzone-subtext">Automatic type inference · Supports multi-sheet workbooks (e.g. carCategories, carModels)</div>
-            <input type="file" id="admin-csv-file" accept=".csv, .xlsx, .xls" style="display: none;" onchange="handleAdminFileSelected(event)">
+        <!-- Explorer Alert Notification -->
+        <div class="alert-box alert-success" id="explorer-alert-success">
+          <span id="explorer-alert-success-text">🎉 Database active</span>
+        </div>
+        <div class="alert-box alert-error" id="explorer-alert-error">
+          <span id="explorer-alert-error-text">❌ Error</span>
+        </div>
+
+        <!-- Explorer Main Split 2-Column Layout -->
+        <div class="explorer-layout">
+          <!-- Left Column: Tables Sidebar -->
+          <div class="explorer-sidebar">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+              <span style="font-size: 0.82rem; font-weight: 700; color: var(--text-main); text-transform: uppercase; letter-spacing: 0.5px;">Tables</span>
+              <span id="explorer-tables-count" style="font-size: 0.72rem; color: var(--text-dim); font-weight: 600;">0 tables</span>
+            </div>
+            <input type="text" id="explorer-table-search" class="explorer-search-input" placeholder="🔍 Search tables..." oninput="filterExplorerTables()">
+            <div class="explorer-table-list" id="explorer-table-list">
+              <div style="padding: 1.5rem; text-align: center; color: var(--text-dim); font-size: 0.82rem;">Loading tables...</div>
+            </div>
           </div>
 
-          <div class="admin-file-badge" id="admin-file-badge">
-            <div style="display: flex; align-items: center; gap: 0.5rem;">
-              <span id="badge-file-icon">📊</span>
-              <div>
-                <strong id="badge-filename">filename.csv</strong>
-                <div style="font-size: 0.72rem; color: var(--text-muted);" id="badge-filesize">0 KB</div>
+          <!-- Right Column: Table Schema & Live Records -->
+          <div class="explorer-main">
+            <!-- Empty State -->
+            <div id="explorer-empty-state" style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; min-height: 400px; text-align: center; color: var(--text-dim); gap: 0.75rem;">
+              <div style="font-size: 3rem;">🗄️</div>
+              <strong style="color: var(--text-main); font-size: 1.05rem;">Select a Table to Explore</strong>
+              <p style="max-width: 380px; font-size: 0.82rem; color: var(--text-muted); margin: 0;">
+                Choose any table from the left sidebar to inspect live paginated records and PostgreSQL column schema metadata.
+              </p>
+            </div>
+
+            <!-- Table Detail Container (shown when table selected) -->
+            <div id="explorer-details-container" style="display: none; flex-direction: column; gap: 1rem; width: 100%;">
+              <!-- Header with actions -->
+              <div class="explorer-content-header">
+                <div style="display: flex; align-items: center; gap: 0.65rem; flex-wrap: wrap;">
+                  <h3 id="explorer-table-title" style="margin: 0; font-size: 1.15rem; color: var(--text-main); display: flex; align-items: center; gap: 0.4rem;">
+                    <span>📄</span>
+                    <span id="selected-table-name-text">table_name</span>
+                  </h3>
+                  <span id="explorer-table-badge" style="background: rgba(16, 185, 129, 0.15); color: #34d399; padding: 2px 8px; border-radius: 12px; font-size: 0.75rem; font-weight: 600;">0 rows</span>
+                  <span id="explorer-cols-badge" style="background: rgba(56, 189, 248, 0.15); color: var(--accent); padding: 2px 8px; border-radius: 12px; font-size: 0.75rem; font-weight: 600;">0 columns</span>
+                </div>
+                <div style="display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap;">
+                  <button class="btn-studio-action" onclick="querySelectedTableInChat()">💬 Query in Chat ➔</button>
+                  <button class="btn-studio-action" onclick="refreshCurrentTableRecords()">🔄 Refresh Records</button>
+                  <button class="btn-danger-action" onclick="confirmTruncateTable()" title="Clear all rows in this table">
+                    <span>🧹</span> Truncate
+                  </button>
+                  <button class="btn-danger-action" onclick="confirmDeleteTable()" title="Drop this table permanently">
+                    <span>🗑️</span> Delete Table
+                  </button>
+                </div>
+              </div>
+
+              <!-- Sub-Tabs: Live Records vs Schema -->
+              <div class="explorer-tab-group">
+                <button class="explorer-tab-btn active" id="tab-btn-records" onclick="switchTableTab('records')">
+                  📋 Live Records
+                </button>
+                <button class="explorer-tab-btn" id="tab-btn-schema" onclick="switchTableTab('schema')">
+                  📐 Schema Metadata
+                </button>
+              </div>
+
+              <!-- Live Records Pane -->
+              <div id="pane-table-records" style="display: flex; flex-direction: column; gap: 0.75rem;">
+                <!-- Pagination Controls Bar -->
+                <div class="explorer-pagination-bar">
+                  <div style="display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap;">
+                    <span id="records-page-info" style="font-size: 0.8rem; color: var(--text-muted); font-weight: 600;">Showing 0–0 of 0 records</span>
+                    <div style="display: flex; align-items: center; gap: 0.35rem; font-size: 0.78rem; color: var(--text-dim);">
+                      <span>Page size:</span>
+                      <select id="records-page-size" class="admin-input" style="padding: 0.2rem 0.5rem; font-size: 0.75rem;" onchange="changeRecordsPageSize()">
+                        <option value="25">25</option>
+                        <option value="50" selected>50</option>
+                        <option value="100">100</option>
+                      </select>
+                    </div>
+                  </div>
+                  <div style="display: flex; gap: 0.4rem; align-items: center;">
+                    <button class="btn-studio-action" id="btn-records-prev" style="padding: 0.3rem 0.65rem; font-size: 0.76rem;" onclick="prevRecordsPage()" disabled>◀ Prev</button>
+                    <button class="btn-studio-action" id="btn-records-next" style="padding: 0.3rem 0.65rem; font-size: 0.76rem;" onclick="nextRecordsPage()" disabled>Next ▶</button>
+                  </div>
+                </div>
+
+                <!-- Table Scroll Grid -->
+                <div class="table-scroll" style="max-height: 420px;">
+                  <table class="admin-table" id="explorer-records-table">
+                    <thead>
+                      <tr id="records-table-header"></tr>
+                    </thead>
+                    <tbody id="records-table-body">
+                      <tr><td style="text-align: center; color: var(--text-dim); padding: 1.5rem;">Loading records...</td></tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              <!-- Schema Metadata Pane -->
+              <div id="pane-table-schema" style="display: none; flex-direction: column; gap: 0.75rem;">
+                <div style="font-size: 0.78rem; color: var(--text-muted);">
+                  PostgreSQL column definitions, primary keys, nullability, and default expressions introspected directly from the catalog.
+                </div>
+                <div class="table-scroll" style="max-height: 420px;">
+                  <table class="admin-table">
+                    <thead>
+                      <tr>
+                        <th>Column Name</th>
+                        <th>PostgreSQL Type</th>
+                        <th>Key</th>
+                        <th>Nullable</th>
+                        <th>Default Expression</th>
+                        <th style="width: 80px; text-align: center;">Action</th>
+                      </tr>
+                    </thead>
+                    <tbody id="schema-table-body">
+                      <tr><td colspan="6" style="text-align: center; color: var(--text-dim); padding: 1.5rem;">Loading schema...</td></tr>
+                    </tbody>
+                  </table>
+                </div>
               </div>
             </div>
-            <button class="btn-studio-action" style="padding: 0.2rem 0.5rem; font-size: 0.75rem;" onclick="resetAdminFile(event)">Remove</button>
           </div>
         </div>
       </div>
 
-      <!-- Card 3: Auto-Detected Schema Preview & Confirmation -->
-      <div class="schema-preview-card" id="schema-preview-card">
-        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem;">
-          <div class="admin-card-title">🔍 3. Schema & Data Type Preview</div>
-          <div style="font-size: 0.8rem; color: var(--accent);" id="preview-metrics">Detected 0 columns · ~0 rows</div>
+      <!-- ==========================================
+           SUB-PANE 2: CSV & EXCEL INGESTION ENGINE
+           ========================================== -->
+      <div id="pane-ingest" style="display: none; flex-direction: column; gap: 1.5rem;">
+        <!-- Ingestion Setup Form -->
+        <div class="admin-grid">
+          <!-- Card 1: Destination Config -->
+          <div class="admin-card">
+            <div class="admin-card-title">🎯 1. Target Destination</div>
+            
+            <div class="admin-input-group">
+              <label for="admin-db-name">Target Database</label>
+              <input type="text" id="admin-db-name" class="admin-input" placeholder="e-commerce" value="e-commerce">
+              <span style="font-size: 0.72rem; color: var(--text-dim);">Database will be automatically created in PostgreSQL if it doesn't already exist.</span>
+            </div>
+
+            <div class="admin-input-group">
+              <label for="admin-table-name">Target Table Name</label>
+              <input type="text" id="admin-table-name" class="admin-input" placeholder="e.g. suppliers (auto-filled on file drop)">
+            </div>
+
+            <div class="admin-input-group">
+              <label>Table Mode / Conflict Policy</label>
+              <div class="mode-options">
+                <label class="mode-label">
+                  <input type="radio" name="admin-mode" value="replace" checked>
+                  <span>Replace (Drop & Recreate)</span>
+                </label>
+                <label class="mode-label">
+                  <input type="radio" name="admin-mode" value="fail">
+                  <span>Fail if Exists</span>
+                </label>
+                <label class="mode-label">
+                  <input type="radio" name="admin-mode" value="append">
+                  <span>Append Data</span>
+                </label>
+              </div>
+            </div>
+          </div>
+
+          <!-- Card 2: CSV / Excel Upload & File Dropzone -->
+          <div class="admin-card">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+              <div class="admin-card-title">📁 2. Upload CSV or Excel Dataset</div>
+              <span style="font-size: 0.72rem; color: var(--accent); font-weight: 600;">Multi-CSV Enabled</span>
+            </div>
+            
+            <div class="admin-dropzone" id="admin-dropzone" onclick="document.getElementById('admin-csv-file').click()" ondragover="handleAdminDragOver(event)" ondragleave="handleAdminDragLeave(event)" ondrop="handleAdminDrop(event)">
+              <div class="admin-dropzone-icon">📄</div>
+              <div class="admin-dropzone-text">Click or drag & drop one or multiple .csv / .xlsx files here</div>
+              <div class="admin-dropzone-subtext">Automatic type inference · Multi-CSV batch upload & multi-sheet workbooks</div>
+              <input type="file" id="admin-csv-file" accept=".csv, .xlsx, .xls" multiple style="display: none;" onchange="handleAdminFileSelected(event)">
+            </div>
+
+            <!-- List of Uploaded Files Container -->
+            <div class="multi-files-container" id="admin-multi-files-container" style="display: none;"></div>
+          </div>
         </div>
 
-        <!-- Excel Multi-Sheet Switcher Bar -->
-        <div id="excel-sheets-bar" style="display: none; align-items: center; gap: 0.6rem; flex-wrap: wrap; background: var(--bg-tertiary); padding: 0.6rem 0.85rem; border-radius: 8px; border: 1px solid var(--border-color);">
-          <span style="font-size: 0.76rem; font-weight: 700; color: var(--text-dim); text-transform: uppercase;">Sheets in Workbook:</span>
-          <div id="excel-sheets-pills" style="display: flex; gap: 0.4rem; flex-wrap: wrap;"></div>
-        </div>
+        <!-- Card 3: Auto-Detected Schema Preview & Confirmation -->
+        <div class="schema-preview-card" id="schema-preview-card">
+          <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem;">
+            <div class="admin-card-title">🔍 3. Schema & Data Type Preview</div>
+            <div style="font-size: 0.8rem; color: var(--accent);" id="preview-metrics">Detected 0 columns · ~0 rows</div>
+          </div>
 
-        <div style="font-size: 0.78rem; color: var(--text-muted);">
-          The engine automatically inferred the PostgreSQL column types below. You can adjust any type dropdown before running the ingestion:
-        </div>
+          <!-- Multi-CSV File Switcher Bar -->
+          <div id="multi-csv-bar" style="display: none; align-items: center; gap: 0.6rem; flex-wrap: wrap; background: var(--bg-tertiary); padding: 0.6rem 0.85rem; border-radius: 8px; border: 1px solid var(--border-color); margin-bottom: 0.5rem;">
+            <span style="font-size: 0.76rem; font-weight: 700; color: var(--text-dim); text-transform: uppercase;">Uploaded Files:</span>
+            <div id="multi-csv-pills" style="display: flex; gap: 0.4rem; flex-wrap: wrap;"></div>
+          </div>
 
-        <div class="table-scroll">
-          <table class="admin-table">
-            <thead>
-              <tr>
-                <th>Original Header</th>
-                <th>PostgreSQL Column</th>
-                <th>Inferred Type (Click to override)</th>
-                <th>Sample Value (Row 1)</th>
-              </tr>
-            </thead>
-            <tbody id="preview-schema-tbody">
-              <!-- Populated dynamically -->
-            </tbody>
-          </table>
-        </div>
+          <!-- Excel Multi-Sheet Switcher Bar -->
+          <div id="excel-sheets-bar" style="display: none; align-items: center; gap: 0.6rem; flex-wrap: wrap; background: var(--bg-tertiary); padding: 0.6rem 0.85rem; border-radius: 8px; border: 1px solid var(--border-color); margin-bottom: 0.5rem;">
+            <span style="font-size: 0.76rem; font-weight: 700; color: var(--text-dim); text-transform: uppercase;">Sheets in Workbook:</span>
+            <div id="excel-sheets-pills" style="display: flex; gap: 0.4rem; flex-wrap: wrap;"></div>
+          </div>
 
-        <!-- Sample Rows Data Preview -->
-        <div style="margin-top: 0.5rem;">
-          <div style="font-size: 0.76rem; font-weight: 600; color: var(--text-dim); text-transform: uppercase; margin-bottom: 0.35rem;">Sample Rows Preview (Top 5)</div>
+          <div style="font-size: 0.78rem; color: var(--text-muted);">
+            The engine automatically inferred the PostgreSQL column types below. You can adjust any type dropdown before running the ingestion:
+          </div>
+
           <div class="table-scroll">
-            <table class="admin-table" id="preview-data-table">
-              <!-- Populated dynamically -->
+            <table class="admin-table">
+              <thead>
+                <tr>
+                  <th>Original Header</th>
+                  <th>PostgreSQL Column</th>
+                  <th>Inferred Type (Click to override)</th>
+                  <th>Sample Value (Row 1)</th>
+                </tr>
+              </thead>
+              <tbody id="preview-schema-tbody">
+                <!-- Populated dynamically -->
+              </tbody>
             </table>
           </div>
-        </div>
 
-        <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1rem; margin-top: 0.5rem;">
-          <div style="display: flex; gap: 0.75rem; flex-wrap: wrap;">
-            <button class="btn-ingest-run" id="btn-run-ingest" onclick="executeCsvIngestion()">
-              <span>🚀</span> Stream This Sheet into PostgreSQL
-            </button>
-            <button class="btn-ingest-run" id="btn-run-all-sheets" style="display: none; background: linear-gradient(135deg, #059669, #10b981);" onclick="executeAllSheetsIngestion()">
-              <span>📦</span> Ingest ALL Sheets (Multiple Tables)
-            </button>
+          <!-- Sample Rows Data Preview -->
+          <div style="margin-top: 0.5rem;">
+            <div style="font-size: 0.76rem; font-weight: 600; color: var(--text-dim); text-transform: uppercase; margin-bottom: 0.35rem;">Sample Rows Preview (Top 5)</div>
+            <div class="table-scroll">
+              <table class="admin-table" id="preview-data-table">
+                <!-- Populated dynamically -->
+              </table>
+            </div>
           </div>
-          <div id="ingest-spinner-msg" style="font-size: 0.82rem; color: var(--text-muted); display: none;">
-            ⏳ Ingesting rows into PostgreSQL via streaming COPY...
+
+          <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1rem; margin-top: 0.5rem;">
+            <div style="display: flex; gap: 0.75rem; flex-wrap: wrap;">
+              <button class="btn-ingest-run" id="btn-run-ingest" onclick="executeCsvIngestion()">
+                <span>🚀</span> Stream Active File into PostgreSQL
+              </button>
+              <button class="btn-ingest-run" id="btn-run-all-sheets" style="display: none; background: linear-gradient(135deg, #059669, #10b981);" onclick="executeAllSheetsIngestion()">
+                <span>📦</span> Ingest ALL Sheets (Multiple Tables)
+              </button>
+              <button class="btn-ingest-run" id="btn-run-all-csvs" style="display: none; background: linear-gradient(135deg, #059669, #10b981);" onclick="executeAllCsvsIngestion()">
+                <span>📦</span> Ingest ALL Uploaded CSVs
+              </button>
+            </div>
+            <div id="ingest-spinner-msg" style="font-size: 0.82rem; color: var(--text-muted); display: none;">
+              ⏳ Ingesting rows into PostgreSQL via streaming COPY...
+            </div>
           </div>
-        </div>
 
-        <!-- Success & Error Alerts -->
-        <div class="alert-box alert-success" id="admin-alert-success">
-          <span id="alert-success-text">🎉 Data successfully imported!</span>
-          <button class="btn-studio-action" onclick="openChatWithNewTable()">💬 Chat with this Table ➔</button>
-        </div>
-        <div class="alert-box alert-error" id="admin-alert-error">
-          <span id="alert-error-text">❌ Ingestion error</span>
-        </div>
-      </div>
-
-      <!-- Card 4: Active Database Tables Inspector -->
-      <div class="admin-card" style="margin-top: 0.5rem;">
-        <div style="display: flex; justify-content: space-between; align-items: center;">
-          <div class="admin-card-title">🗄️ Active Tables in Database (<span id="active-db-label">e-commerce</span>)</div>
-          <span style="font-size: 0.75rem; color: var(--text-dim);">Auto-refreshed with schema cache</span>
-        </div>
-
-        <div class="table-scroll" style="max-height: 250px;">
-          <table class="admin-table">
-            <thead>
-              <tr>
-                <th>Table Name</th>
-                <th>Row Count</th>
-                <th>Columns</th>
-                <th>Action</th>
-              </tr>
-            </thead>
-            <tbody id="admin-tables-tbody">
-              <tr>
-                <td colspan="4" style="text-align: center; color: var(--text-dim);">Loading active tables...</td>
-              </tr>
-            </tbody>
-          </table>
+          <!-- Success & Error Alerts -->
+          <div class="alert-box alert-success" id="admin-alert-success">
+            <span id="alert-success-text">🎉 Data successfully imported!</span>
+            <button class="btn-studio-action" onclick="openChatWithNewTable()">💬 Chat with this Table ➔</button>
+          </div>
+          <div class="alert-box alert-error" id="admin-alert-error">
+            <span id="alert-error-text">❌ Ingestion error</span>
+          </div>
         </div>
       </div>
     </div>
@@ -2377,12 +2885,12 @@ CHAT_HTML_CONTENT = r"""<!DOCTYPE html>
   <!-- Chrome "Ask Gemini"-Style AI Side Panel -->
   <div class="side-panel-backdrop" id="side-panel-backdrop" onclick="closeAiSidePanel()"></div>
 
-<aside class="ai-side-panel" id="ai-side-panel" aria-label="Groq AI SQL Assistant">
+<aside class="ai-side-panel" id="ai-side-panel" aria-label="Gemini AI SQL Assistant">
   <div class="side-panel-header">
     <div class="ai-panel-title-group">
       <div class="ai-sparkle-icon">✨</div>
       <div>
-        <div class="ai-panel-title">Groq AI Assistant</div>
+        <div class="ai-panel-title">Gemini AI Assistant</div>
         <div class="ai-panel-subtitle">Live SQL Editor Monitoring & Solution Mentor</div>
       </div>
     </div>
@@ -2399,7 +2907,7 @@ CHAT_HTML_CONTENT = r"""<!DOCTYPE html>
   </div>
 
   <div class="side-panel-body" id="ai-panel-content">
-    <!-- Populated dynamically by Groq AI -->
+    <!-- Populated dynamically by Gemini AI -->
   </div>
 </aside>
 
@@ -2487,6 +2995,30 @@ CHAT_HTML_CONTENT = r"""<!DOCTYPE html>
   </div>
 </dialog>
 
+<!-- Industry-Standard Destructive Action Confirmation Modal -->
+<div class="danger-modal-backdrop" id="danger-modal-backdrop" onclick="handleDangerBackdropClick(event)">
+  <div class="danger-modal" role="dialog" aria-modal="true" aria-labelledby="danger-modal-title">
+    <div class="danger-modal-header">
+      <div class="danger-modal-icon">⚠️</div>
+      <div>
+        <div class="danger-modal-title" id="danger-modal-title">Confirm Deletion</div>
+        <div style="font-size: 0.75rem; color: #f87171; font-weight: 600;">Destructive Action · Permanent Loss</div>
+      </div>
+    </div>
+    <div class="danger-modal-desc" id="danger-modal-desc">
+      Are you sure you want to proceed? This action cannot be undone.
+    </div>
+    <div class="admin-input-group" id="danger-modal-input-group" style="display: none;">
+      <label id="danger-modal-input-label" for="danger-modal-input">Type name to confirm:</label>
+      <input type="text" id="danger-modal-input" class="admin-input" autocomplete="off" placeholder="" oninput="validateDangerConfirmationInput()">
+    </div>
+    <div style="display: flex; justify-content: flex-end; gap: 0.75rem; margin-top: 0.5rem;">
+      <button class="btn-studio-action" onclick="closeDangerModal()">Cancel</button>
+      <button class="btn-danger-confirm" id="btn-danger-confirm-action" onclick="executeDangerAction()">Delete</button>
+    </div>
+  </div>
+</div>
+
 <script>
   let activeConversationId = null;
   let currentUser = null;
@@ -2525,7 +3057,7 @@ CHAT_HTML_CONTENT = r"""<!DOCTYPE html>
     } else if (viewName === 'admin') {
       if (adminView) adminView.style.display = 'flex';
       if (tabAdmin) tabAdmin.classList.add('active');
-      loadAdminTables();
+      initStudio();
     } else {
       if (chatView) chatView.style.display = 'flex';
       if (tabChat) tabChat.classList.add('active');
@@ -3347,7 +3879,7 @@ CHAT_HTML_CONTENT = r"""<!DOCTYPE html>
       <div class="ai-loading-spinner">
         <div class="ai-pulse-dot"></div>
         <div>
-          <strong style="color: var(--text-main);">Groq AI is analyzing your SQL code...</strong>
+          <strong style="color: var(--text-main);">Gemini AI is analyzing your SQL code...</strong>
           <div style="font-size: 0.78rem; color: var(--text-dim); margin-top: 0.35rem;">Monitoring editor clauses, filter conditions, and potential pitfalls</div>
         </div>
       </div>
@@ -3365,7 +3897,7 @@ CHAT_HTML_CONTENT = r"""<!DOCTYPE html>
       });
 
       if (!res.ok) {
-        throw new Error('Groq AI hint service unavailable');
+        throw new Error('Gemini AI hint service unavailable');
       }
 
       const data = await res.json();
@@ -3413,7 +3945,7 @@ CHAT_HTML_CONTENT = r"""<!DOCTYPE html>
       </div>
 
       <button class="btn-studio-action" style="width: 100%; justify-content: center; padding: 0.6rem; font-weight: 600;" onclick="loadAiHint()">
-        🔄 Re-analyze Editor with Groq AI
+        🔄 Re-analyze Editor with Gemini AI
       </button>
     `;
   }
@@ -3427,7 +3959,7 @@ CHAT_HTML_CONTENT = r"""<!DOCTYPE html>
       <div class="ai-loading-spinner">
         <div class="ai-pulse-dot"></div>
         <div>
-          <strong style="color: var(--text-main);">Groq AI is preparing the solution walkthrough...</strong>
+          <strong style="color: var(--text-main);">Gemini AI is preparing the solution walkthrough...</strong>
           <div style="font-size: 0.78rem; color: var(--text-dim); margin-top: 0.35rem;">Structuring optimal PostgreSQL syntax and efficiency breakdown</div>
         </div>
       </div>
@@ -3444,7 +3976,7 @@ CHAT_HTML_CONTENT = r"""<!DOCTYPE html>
       });
 
       if (!res.ok) {
-        throw new Error('Groq AI solution service unavailable');
+        throw new Error('Gemini AI solution service unavailable');
       }
 
       const data = await res.json();
@@ -3548,7 +4080,7 @@ CHAT_HTML_CONTENT = r"""<!DOCTYPE html>
     if (data.status === 'Runtime Error' || data.status === 'Wrong Answer') {
       askAiErrorBtn = `
         <button class="btn-ask-ai-error" onclick="openAiSidePanel('hint', true)">
-          ✨ Ask Groq AI to Diagnose & Fix This Error ➔
+          ✨ Ask Gemini AI to Diagnose & Fix This Error ➔
         </button>
       `;
     }
@@ -3614,6 +4146,7 @@ CHAT_HTML_CONTENT = r"""<!DOCTYPE html>
   // ADMIN & CSV INGESTION STUDIO LOGIC
   // =============================================================
   let selectedAdminFile = null;
+  let selectedAdminFiles = [];
   let adminPreviewData = null;
   let lastIngestedTable = null;
 
@@ -3634,24 +4167,141 @@ CHAT_HTML_CONTENT = r"""<!DOCTYPE html>
     const zone = document.getElementById('admin-dropzone');
     if (zone) zone.classList.remove('dragover');
     if (e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files.length > 0) {
-      processAdminFile(e.dataTransfer.files[0]);
+      handleAdminFilesList(Array.from(e.dataTransfer.files));
     }
   }
 
   function handleAdminFileSelected(e) {
     if (e.target && e.target.files && e.target.files.length > 0) {
-      processAdminFile(e.target.files[0]);
+      handleAdminFilesList(Array.from(e.target.files));
+    }
+  }
+
+  function handleAdminFilesList(files) {
+    const validFiles = files.filter(f => {
+      const fn = f.name.toLowerCase();
+      return fn.endsWith('.csv') || fn.endsWith('.xlsx') || fn.endsWith('.xls') || fn.endsWith('.xlsm');
+    });
+
+    if (validFiles.length === 0) {
+      alert('Please select valid CSV (.csv) or Excel (.xlsx, .xls) files.');
+      return;
+    }
+
+    selectedAdminFiles = validFiles;
+    selectedAdminFile = validFiles[0];
+    renderMultiFilesBadges();
+    processAdminFile(selectedAdminFile);
+  }
+
+  function switchActiveAdminFile(idx) {
+    if (!selectedAdminFiles[idx]) return;
+    selectedAdminFile = selectedAdminFiles[idx];
+    renderMultiFilesBadges();
+    processAdminFile(selectedAdminFile);
+  }
+
+  function removeAdminFile(idx, e) {
+    if (e) e.stopPropagation();
+    if (idx < 0 || idx >= selectedAdminFiles.length) return;
+    selectedAdminFiles.splice(idx, 1);
+    if (selectedAdminFiles.length === 0) {
+      resetAdminFile();
+    } else {
+      selectedAdminFile = selectedAdminFiles[0];
+      renderMultiFilesBadges();
+      processAdminFile(selectedAdminFile);
+    }
+  }
+
+  function renderMultiFilesBadges() {
+    const container = document.getElementById('admin-multi-files-container');
+    const multiCsvBar = document.getElementById('multi-csv-bar');
+    const multiCsvPills = document.getElementById('multi-csv-pills');
+    const btnAllCsvs = document.getElementById('btn-run-all-csvs');
+
+    if (!container) return;
+
+    if (selectedAdminFiles.length === 0) {
+      container.style.display = 'none';
+      container.innerHTML = '';
+      if (multiCsvBar) multiCsvBar.style.display = 'none';
+      if (btnAllCsvs) btnAllCsvs.style.display = 'none';
+      return;
+    }
+
+    container.style.display = 'flex';
+    container.innerHTML = '';
+
+    selectedAdminFiles.forEach((file, idx) => {
+      const fn = file.name.toLowerCase();
+      const isExcel = fn.endsWith('.xlsx') || fn.endsWith('.xls') || fn.endsWith('.xlsm');
+      const isActive = file === selectedAdminFile;
+      const kb = (file.size / 1024).toFixed(1);
+
+      const item = document.createElement('div');
+      item.style.cssText = `display: flex; align-items: center; justify-content: space-between; background: var(--bg-tertiary); padding: 0.45rem 0.75rem; border-radius: 6px; border: 1px solid ${isActive ? 'var(--accent)' : 'var(--border-color)'}; font-size: 0.8rem; cursor: pointer; transition: all 0.15s;`;
+      item.onclick = () => switchActiveAdminFile(idx);
+
+      item.innerHTML = `
+        <div style="display: flex; align-items: center; gap: 0.5rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+          <span>${isExcel ? '📗' : '📊'}</span>
+          <span style="font-weight: 600; color: ${isActive ? 'var(--accent)' : 'var(--text-main)'}; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${escapeHtml(file.name)}</span>
+          <span style="color: var(--text-dim); font-size: 0.72rem;">(${kb} KB)</span>
+          ${isActive ? '<span style="font-size: 0.68rem; background: rgba(56, 189, 248, 0.2); color: var(--accent); padding: 1px 5px; border-radius: 4px; font-weight: 700;">ACTIVE</span>' : ''}
+        </div>
+        <button type="button" style="background: none; border: none; color: var(--text-dim); font-size: 0.9rem; cursor: pointer; padding: 2px 6px;" onclick="removeAdminFile(${idx}, event)" title="Remove file">✕</button>
+      `;
+      container.appendChild(item);
+    });
+
+    if (multiCsvBar && multiCsvPills) {
+      if (selectedAdminFiles.length > 1) {
+        multiCsvPills.innerHTML = '';
+        selectedAdminFiles.forEach((file, idx) => {
+          const fn = file.name.toLowerCase();
+          const isExcel = fn.endsWith('.xlsx') || fn.endsWith('.xls') || fn.endsWith('.xlsm');
+          const isActive = file === selectedAdminFile;
+
+          const pill = document.createElement('button');
+          pill.type = 'button';
+          pill.className = `file-tab-pill ${isActive ? 'active' : ''}`;
+          pill.innerHTML = `<span>${isExcel ? '📗' : '📊'}</span><span>${escapeHtml(file.name)}</span>`;
+          pill.onclick = () => switchActiveAdminFile(idx);
+          multiCsvPills.appendChild(pill);
+        });
+        multiCsvBar.style.display = 'flex';
+      } else {
+        multiCsvBar.style.display = 'none';
+      }
+    }
+
+    if (btnAllCsvs) {
+      if (selectedAdminFiles.length > 1) {
+        btnAllCsvs.style.display = 'inline-flex';
+        btnAllCsvs.innerHTML = `<span>📦</span> Ingest ALL ${selectedAdminFiles.length} Uploaded Files`;
+      } else {
+        btnAllCsvs.style.display = 'none';
+      }
     }
   }
 
   function resetAdminFile(e) {
     if (e) e.stopPropagation();
     selectedAdminFile = null;
+    selectedAdminFiles = [];
     adminPreviewData = null;
     const fileInput = document.getElementById('admin-csv-file');
     if (fileInput) fileInput.value = '';
-    const badge = document.getElementById('admin-file-badge');
-    if (badge) badge.style.display = 'none';
+    const container = document.getElementById('admin-multi-files-container');
+    if (container) {
+      container.style.display = 'none';
+      container.innerHTML = '';
+    }
+    const multiCsvBar = document.getElementById('multi-csv-bar');
+    if (multiCsvBar) multiCsvBar.style.display = 'none';
+    const btnAllCsvs = document.getElementById('btn-run-all-csvs');
+    if (btnAllCsvs) btnAllCsvs.style.display = 'none';
     const previewCard = document.getElementById('schema-preview-card');
     if (previewCard) previewCard.style.display = 'none';
     const successAlert = document.getElementById('admin-alert-success');
@@ -3661,6 +4311,7 @@ CHAT_HTML_CONTENT = r"""<!DOCTYPE html>
   }
 
   async function processAdminFile(file, sheetName = null) {
+    if (!file) return;
     const fn = file.name.toLowerCase();
     const isCsv = fn.endsWith('.csv');
     const isExcel = fn.endsWith('.xlsx') || fn.endsWith('.xls') || fn.endsWith('.xlsm');
@@ -3669,19 +4320,6 @@ CHAT_HTML_CONTENT = r"""<!DOCTYPE html>
       return;
     }
     selectedAdminFile = file;
-
-    // Show badge
-    const badge = document.getElementById('admin-file-badge');
-    const badgeName = document.getElementById('badge-filename');
-    const badgeSize = document.getElementById('badge-filesize');
-    const badgeIcon = document.getElementById('badge-file-icon');
-    if (badge && badgeName && badgeSize) {
-      badgeName.textContent = file.name;
-      const kb = (file.size / 1024).toFixed(1);
-      badgeSize.textContent = `${kb} KB`;
-      if (badgeIcon) badgeIcon.textContent = isExcel ? '📗' : '📊';
-      badge.style.display = 'flex';
-    }
 
     // Hide old alerts
     const successAlert = document.getElementById('admin-alert-success');
@@ -3887,6 +4525,83 @@ CHAT_HTML_CONTENT = r"""<!DOCTYPE html>
     }
   }
 
+  async function executeAllCsvsIngestion() {
+    if (!selectedAdminFiles || selectedAdminFiles.length === 0) {
+      alert('Please select one or more CSV/Excel files first.');
+      return;
+    }
+
+    const dbInput = document.getElementById('admin-db-name');
+    const modeRadio = document.querySelector('input[name="admin-mode"]:checked');
+    const dbName = dbInput ? dbInput.value.trim() : 'e-commerce';
+    const mode = modeRadio ? modeRadio.value : 'replace';
+
+    const runBtn = document.getElementById('btn-run-ingest');
+    const btnAllSheets = document.getElementById('btn-run-all-sheets');
+    const btnAllCsvs = document.getElementById('btn-run-all-csvs');
+    const spinnerMsg = document.getElementById('ingest-spinner-msg');
+    const successAlert = document.getElementById('admin-alert-success');
+    const errorAlert = document.getElementById('admin-alert-error');
+
+    if (runBtn) runBtn.disabled = true;
+    if (btnAllSheets) btnAllSheets.disabled = true;
+    if (btnAllCsvs) btnAllCsvs.disabled = true;
+    if (spinnerMsg) {
+      spinnerMsg.textContent = `⏳ Batch streaming ${selectedAdminFiles.length} files into PostgreSQL tables...`;
+      spinnerMsg.style.display = 'block';
+    }
+    if (successAlert) successAlert.style.display = 'none';
+    if (errorAlert) errorAlert.style.display = 'none';
+
+    const formData = new FormData();
+    selectedAdminFiles.forEach(file => {
+      formData.append('files', file);
+    });
+    formData.append('db_name', dbName);
+    formData.append('mode', mode);
+
+    try {
+      const res = await fetch('/api/v1/admin/import-multiple-csvs', {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!res.ok) {
+        const errJson = await res.json().catch(() => ({}));
+        throw new Error(errJson.detail || 'Multi-file ingestion failed.');
+      }
+
+      const result = await res.json();
+      lastIngestedTable = result.tables.length > 0 ? result.tables[0].table : null;
+
+      if (successAlert) {
+        const succText = document.getElementById('alert-success-text');
+        if (succText) {
+          const tableSummaries = result.tables.map(t => `${t.table} (${t.rows_inserted.toLocaleString()} rows)`).join(', ');
+          succText.textContent = `🎉 Batch Upload Complete! Successfully imported ${result.tables.length} tables [${tableSummaries}] into database "${result.database}" (${result.total_rows_inserted.toLocaleString()} total rows).`;
+        }
+        successAlert.style.display = 'flex';
+      }
+
+      loadAdminTables();
+      if (typeof fetchSchemaOverview === 'function') {
+        fetchSchemaOverview();
+      }
+    } catch (err) {
+      console.error('Multi-file ingestion error:', err);
+      if (errorAlert) {
+        const errorText = document.getElementById('alert-error-text');
+        if (errorText) errorText.textContent = `❌ ${err.message}`;
+        errorAlert.style.display = 'flex';
+      }
+    } finally {
+      if (runBtn) runBtn.disabled = false;
+      if (btnAllSheets) btnAllSheets.disabled = false;
+      if (btnAllCsvs) btnAllCsvs.disabled = false;
+      if (spinnerMsg) spinnerMsg.style.display = 'none';
+    }
+  }
+
   async function executeCsvIngestion() {
     if (!selectedAdminFile) {
       alert('Please select a CSV or Excel file first.');
@@ -3917,12 +4632,14 @@ CHAT_HTML_CONTENT = r"""<!DOCTYPE html>
 
     const runBtn = document.getElementById('btn-run-ingest');
     const btnAllSheets = document.getElementById('btn-run-all-sheets');
+    const btnAllCsvs = document.getElementById('btn-run-all-csvs');
     const spinnerMsg = document.getElementById('ingest-spinner-msg');
     const successAlert = document.getElementById('admin-alert-success');
     const errorAlert = document.getElementById('admin-alert-error');
 
     if (runBtn) runBtn.disabled = true;
     if (btnAllSheets) btnAllSheets.disabled = true;
+    if (btnAllCsvs) btnAllCsvs.disabled = true;
     if (spinnerMsg) {
       spinnerMsg.textContent = '⏳ Ingesting rows into PostgreSQL via streaming COPY...';
       spinnerMsg.style.display = 'block';
@@ -3979,6 +4696,8 @@ CHAT_HTML_CONTENT = r"""<!DOCTYPE html>
       }
     } finally {
       if (runBtn) runBtn.disabled = false;
+      if (btnAllSheets) btnAllSheets.disabled = false;
+      if (btnAllCsvs) btnAllCsvs.disabled = false;
       if (spinnerMsg) spinnerMsg.style.display = 'none';
     }
   }
@@ -3993,49 +4712,797 @@ CHAT_HTML_CONTENT = r"""<!DOCTYPE html>
     }
   }
 
-  async function loadAdminTables() {
-    const tbody = document.getElementById('admin-tables-tbody');
-    const activeDbLabel = document.getElementById('active-db-label');
-    const dbInput = document.getElementById('admin-db-name');
-    if (activeDbLabel && dbInput && dbInput.value) {
-      activeDbLabel.textContent = dbInput.value;
+  // =============================================================
+  // DESTRUCTIVE ACTION CONFIRMATION MODAL LOGIC (Industry Standard)
+  // =============================================================
+  let dangerModalState = {
+    requiredText: null,
+    onConfirm: null,
+  };
+
+  function openDangerModal({ title, description, requiredText, confirmBtnText = 'Delete', onConfirm }) {
+    dangerModalState.requiredText = requiredText || null;
+    dangerModalState.onConfirm = onConfirm || null;
+
+    const titleEl = document.getElementById('danger-modal-title');
+    const descEl = document.getElementById('danger-modal-desc');
+    const inputGroup = document.getElementById('danger-modal-input-group');
+    const inputLabel = document.getElementById('danger-modal-input-label');
+    const inputEl = document.getElementById('danger-modal-input');
+    const confirmBtn = document.getElementById('btn-danger-confirm-action');
+    const backdrop = document.getElementById('danger-modal-backdrop');
+
+    if (titleEl) titleEl.textContent = title;
+    if (descEl) descEl.innerHTML = description;
+
+    if (requiredText) {
+      if (inputGroup) inputGroup.style.display = 'flex';
+      if (inputLabel) inputLabel.innerHTML = `To confirm, type <strong style="color: #f87171; font-family: monospace;">${escapeHtml(requiredText)}</strong> below:`;
+      if (inputEl) {
+        inputEl.value = '';
+        inputEl.placeholder = requiredText;
+      }
+      if (confirmBtn) confirmBtn.disabled = true;
+    } else {
+      if (inputGroup) inputGroup.style.display = 'none';
+      if (confirmBtn) confirmBtn.disabled = false;
+    }
+
+    if (confirmBtn) {
+      confirmBtn.textContent = confirmBtnText;
+    }
+
+    if (backdrop) {
+      backdrop.classList.add('open');
+    }
+
+    if (requiredText && inputEl) {
+      setTimeout(() => inputEl.focus(), 50);
+    }
+  }
+
+  function closeDangerModal() {
+    const backdrop = document.getElementById('danger-modal-backdrop');
+    if (backdrop) backdrop.classList.remove('open');
+    dangerModalState.requiredText = null;
+    dangerModalState.onConfirm = null;
+  }
+
+  function handleDangerBackdropClick(e) {
+    if (e.target.id === 'danger-modal-backdrop') {
+      closeDangerModal();
+    }
+  }
+
+  function validateDangerConfirmationInput() {
+    const inputEl = document.getElementById('danger-modal-input');
+    const confirmBtn = document.getElementById('btn-danger-confirm-action');
+    if (!dangerModalState.requiredText || !confirmBtn) return;
+    const isMatch = inputEl && inputEl.value.trim() === dangerModalState.requiredText;
+    confirmBtn.disabled = !isMatch;
+  }
+
+  async function executeDangerAction() {
+    if (dangerModalState.requiredText) {
+      const inputEl = document.getElementById('danger-modal-input');
+      if (!inputEl || inputEl.value.trim() !== dangerModalState.requiredText) {
+        return;
+      }
+    }
+
+    const fn = dangerModalState.onConfirm;
+    const confirmBtn = document.getElementById('btn-danger-confirm-action');
+    if (confirmBtn) {
+      confirmBtn.disabled = true;
+      confirmBtn.textContent = 'Processing...';
     }
 
     try {
-      const res = await fetch('/api/v1/admin/tables');
+      if (typeof fn === 'function') {
+        await fn();
+      }
+      closeDangerModal();
+    } catch (err) {
+      console.error('Danger action failed:', err);
+      alert('Action failed: ' + err.message);
+      if (confirmBtn) confirmBtn.disabled = false;
+    }
+  }
+
+  function confirmDeleteDatabase() {
+    if (!selectedExplorerDb) {
+      alert('Please select a database first.');
+      return;
+    }
+    const dbName = selectedExplorerDb;
+    const forbidden = ['postgres', 'template0', 'template1'];
+    if (forbidden.includes(dbName.toLowerCase())) {
+      alert(`System database "${dbName}" is protected and cannot be deleted.`);
+      return;
+    }
+
+    openDangerModal({
+      title: `Drop Database "${dbName}"`,
+      description: `You are about to permanently drop database <strong style="color: #f87171;">${escapeHtml(dbName)}</strong>. All schemas, tables, and data within it will be irreversibly erased. Active client sessions will be terminated.`,
+      requiredText: dbName,
+      confirmBtnText: 'Drop Database',
+      onConfirm: async () => {
+        const res = await fetch(`/api/v1/admin/databases/${encodeURIComponent(dbName)}`, {
+          method: 'DELETE'
+        });
+        if (!res.ok) {
+          const err = await res.json().catch(() => ({}));
+          throw new Error(err.detail || 'Failed to drop database.');
+        }
+        selectedExplorerDb = null;
+        selectedExplorerTable = null;
+        await loadExplorerDatabases();
+      }
+    });
+  }
+
+  function confirmDeleteTable() {
+    if (!selectedExplorerTable) {
+      alert('Please select a table first.');
+      return;
+    }
+    const tableName = selectedExplorerTable;
+    const dbName = selectedExplorerDb;
+
+    openDangerModal({
+      title: `Drop Table "${tableName}"`,
+      description: `You are about to permanently delete table <strong style="color: #f87171;">${escapeHtml(tableName)}</strong> from database <code style="color: var(--accent);">${escapeHtml(dbName)}</code> with CASCADE. All rows, foreign keys, and constraints will be destroyed.`,
+      requiredText: tableName,
+      confirmBtnText: 'Drop Table',
+      onConfirm: async () => {
+        const url = `/api/v1/admin/tables/${encodeURIComponent(tableName)}?db_name=${encodeURIComponent(dbName)}&cascade=true`;
+        const res = await fetch(url, { method: 'DELETE' });
+        if (!res.ok) {
+          const err = await res.json().catch(() => ({}));
+          throw new Error(err.detail || 'Failed to drop table.');
+        }
+        selectedExplorerTable = null;
+        showExplorerEmptyState();
+        await loadExplorerTables(dbName);
+        if (typeof fetchSchemaOverview === 'function') fetchSchemaOverview();
+      }
+    });
+  }
+
+  function confirmTruncateTable() {
+    if (!selectedExplorerTable) {
+      alert('Please select a table first.');
+      return;
+    }
+    const tableName = selectedExplorerTable;
+    const dbName = selectedExplorerDb;
+
+    openDangerModal({
+      title: `Truncate Table "${tableName}"`,
+      description: `You are about to instantly erase ALL records in table <strong style="color: #f87171;">${escapeHtml(tableName)}</strong>. The table schema will remain, but data cannot be recovered.`,
+      requiredText: 'TRUNCATE',
+      confirmBtnText: 'Truncate Table',
+      onConfirm: async () => {
+        const url = `/api/v1/admin/tables/${encodeURIComponent(tableName)}/truncate?db_name=${encodeURIComponent(dbName)}&cascade=true`;
+        const res = await fetch(url, { method: 'POST' });
+        if (!res.ok) {
+          const err = await res.json().catch(() => ({}));
+          throw new Error(err.detail || 'Failed to truncate table.');
+        }
+        await loadTableRecords(tableName, 0);
+        await loadExplorerTables(dbName);
+      }
+    });
+  }
+
+  function confirmDropColumn(colName) {
+    if (!selectedExplorerTable || !colName) return;
+    const tableName = selectedExplorerTable;
+    const dbName = selectedExplorerDb;
+
+    openDangerModal({
+      title: `Drop Column "${colName}"`,
+      description: `Are you sure you want to drop column <strong style="color: #f87171;">${escapeHtml(colName)}</strong> from table <code>${escapeHtml(tableName)}</code>? All data stored in this column will be permanently deleted.`,
+      requiredText: null,
+      confirmBtnText: 'Drop Column',
+      onConfirm: async () => {
+        const url = `/api/v1/admin/tables/${encodeURIComponent(tableName)}/columns/${encodeURIComponent(colName)}?db_name=${encodeURIComponent(dbName)}&cascade=true`;
+        const res = await fetch(url, { method: 'DELETE' });
+        if (!res.ok) {
+          const err = await res.json().catch(() => ({}));
+          throw new Error(err.detail || 'Failed to drop column.');
+        }
+        await loadTableSchema(tableName);
+        await loadTableRecords(tableName, currentRecordsOffset);
+        if (typeof fetchSchemaOverview === 'function') fetchSchemaOverview();
+      }
+    });
+  }
+
+  function confirmDeleteRowByIndex(rowIdx) {
+    if (!selectedExplorerTable) return;
+    const row = currentTableRecordsData[rowIdx];
+    if (!row) return;
+
+    const tableName = selectedExplorerTable;
+    const dbName = selectedExplorerDb;
+
+    const condition = {};
+    if (currentTablePkCols && currentTablePkCols.length > 0) {
+      currentTablePkCols.forEach(pk => {
+        const colIdx = currentTableColumns.indexOf(pk);
+        if (colIdx !== -1 && row[colIdx] !== null && row[colIdx] !== undefined) {
+          condition[pk] = row[colIdx];
+        }
+      });
+    }
+
+    if (Object.keys(condition).length === 0) {
+      let count = 0;
+      currentTableColumns.forEach((c, idx) => {
+        if (count < 2 && row[idx] !== null && row[idx] !== undefined) {
+          condition[c] = row[idx];
+          count++;
+        }
+      });
+    }
+
+    if (Object.keys(condition).length === 0) {
+      alert('Cannot delete row: all values are NULL.');
+      return;
+    }
+
+    const condSummary = Object.entries(condition).map(([k, v]) => `${k} = ${JSON.stringify(v)}`).join(', ');
+
+    openDangerModal({
+      title: 'Delete Row',
+      description: `Are you sure you want to delete this row matching (<strong>${escapeHtml(condSummary)}</strong>) from table <code>${escapeHtml(tableName)}</code>? This action cannot be undone.`,
+      requiredText: null,
+      confirmBtnText: 'Delete Row',
+      onConfirm: async () => {
+        const url = `/api/v1/admin/tables/${encodeURIComponent(tableName)}/rows/delete`;
+        const res = await fetch(url, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            database: dbName,
+            condition: condition
+          })
+        });
+        if (!res.ok) {
+          const err = await res.json().catch(() => ({}));
+          throw new Error(err.detail || 'Failed to delete row.');
+        }
+        await loadTableRecords(tableName, currentRecordsOffset);
+        await loadExplorerTables(dbName);
+      }
+    });
+  }
+
+  // =============================================================
+  // DATABASE & TABLE EXPLORER LOGIC
+  // =============================================================
+  let currentStudioTab = 'explorer'; // 'explorer' or 'ingest'
+  let currentTableTab = 'records';   // 'records' or 'schema'
+  let availableDatabases = [];
+  let selectedExplorerDb = null;
+  let activeChatDb = 'e-commerce';
+  let explorerTables = [];
+  let selectedExplorerTable = null;
+  let currentRecordsOffset = 0;
+  let currentRecordsLimit = 50;
+  let totalTableRecords = 0;
+  let currentTableColumns = [];
+  let currentTableRecordsData = [];
+  let currentTablePkCols = [];
+
+  function switchStudioTab(tab) {
+    currentStudioTab = tab;
+    const btnExp = document.getElementById('subnav-btn-explorer');
+    const btnIng = document.getElementById('subnav-btn-ingest');
+    const paneExp = document.getElementById('pane-explorer');
+    const paneIng = document.getElementById('pane-ingest');
+
+    if (tab === 'explorer') {
+      if (btnExp) btnExp.classList.add('active');
+      if (btnIng) btnIng.classList.remove('active');
+      if (paneExp) paneExp.style.display = 'flex';
+      if (paneIng) paneIng.style.display = 'none';
+      if (availableDatabases.length === 0) {
+        loadExplorerDatabases();
+      }
+    } else {
+      if (btnIng) btnIng.classList.add('active');
+      if (btnExp) btnExp.classList.remove('active');
+      if (paneIng) paneIng.style.display = 'flex';
+      if (paneExp) paneExp.style.display = 'none';
+      const dbInput = document.getElementById('admin-db-name');
+      if (dbInput && selectedExplorerDb) {
+        dbInput.value = selectedExplorerDb;
+      }
+    }
+  }
+
+  function initStudio() {
+    switchStudioTab(currentStudioTab);
+    if (availableDatabases.length === 0) {
+      loadExplorerDatabases();
+    }
+  }
+
+  function updateHeaderActiveDbBadge(dbName) {
+    const full = document.getElementById('header-db-text-full');
+    const short = document.getElementById('header-db-text-short');
+    if (full) full.textContent = `🟢 PostgreSQL (${dbName})`;
+    if (short) short.textContent = `🟢 ${dbName}`;
+  }
+
+  async function loadExplorerDatabases() {
+    try {
+      const res = await fetch('/api/v1/admin/databases');
       if (!res.ok) return;
-      const tables = await res.json();
+      availableDatabases = await res.json();
 
-      if (!tbody) return;
-      tbody.innerHTML = '';
-
-      if (tables.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="4" style="text-align: center; color: var(--text-dim); padding: 1rem;">No tables found in public schema.</td></tr>';
-        return;
+      const currentObj = availableDatabases.find(d => d.is_current);
+      if (currentObj) {
+        activeChatDb = currentObj.database_name;
+        updateHeaderActiveDbBadge(activeChatDb);
       }
 
-      tables.forEach(t => {
-        const tr = document.createElement('tr');
-        const colList = t.columns.map(c => `<span style="display: inline-block; background: var(--bg-primary); border: 1px solid var(--border-color); border-radius: 4px; padding: 1px 5px; margin: 1px; font-size: 0.72rem; color: var(--text-muted); font-family: monospace;">${c}</span>`).join(' ');
+      if (!selectedExplorerDb) {
+        selectedExplorerDb = activeChatDb;
+      }
 
-        tr.innerHTML = `
-          <td><strong style="color: var(--accent);">${t.table_name}</strong></td>
-          <td><span style="background: rgba(16, 185, 129, 0.15); color: #34d399; padding: 2px 8px; border-radius: 12px; font-size: 0.75rem; font-weight: 600;">${t.row_count.toLocaleString()} rows</span></td>
-          <td style="max-width: 450px; overflow-x: auto;">${colList}</td>
-          <td>
-            <button class="btn-studio-action" style="padding: 0.25rem 0.6rem; font-size: 0.75rem;" onclick="openChatWithNewTable('${t.table_name}')">💬 Query</button>
-          </td>
-        `;
-        tbody.appendChild(tr);
-      });
+      const select = document.getElementById('explorer-db-select');
+      if (select) {
+        select.innerHTML = '';
+        availableDatabases.forEach(d => {
+          const opt = document.createElement('option');
+          opt.value = d.database_name;
+          opt.textContent = `${d.database_name}${d.is_current ? ' (Active)' : ''}`;
+          if (d.database_name.toLowerCase() === selectedExplorerDb.toLowerCase()) {
+            opt.selected = true;
+          }
+          select.appendChild(opt);
+        });
+      }
+
+      updateExplorerDbStatusBadge();
+      await loadExplorerTables(selectedExplorerDb);
     } catch (err) {
-      console.warn('Failed to load tables list:', err);
+      console.warn('Failed to load databases:', err);
     }
+  }
+
+  function updateExplorerDbStatusBadge() {
+    const badge = document.getElementById('explorer-db-status');
+    const btnSet = document.getElementById('btn-set-active-db');
+    const isActive = selectedExplorerDb && (selectedExplorerDb.toLowerCase() === activeChatDb.toLowerCase());
+
+    if (badge) {
+      if (isActive) {
+        badge.className = 'explorer-db-status db-status-active';
+        badge.textContent = '🟢 Active Chat DB';
+      } else {
+        badge.className = 'explorer-db-status db-status-standby';
+        badge.textContent = '⚪ Standby DB';
+      }
+    }
+
+    if (btnSet) {
+      btnSet.style.display = isActive ? 'none' : 'inline-flex';
+    }
+
+    const dbInput = document.getElementById('admin-db-name');
+    if (dbInput && selectedExplorerDb) {
+      dbInput.value = selectedExplorerDb;
+    }
+  }
+
+  function onExplorerDbChanged() {
+    const select = document.getElementById('explorer-db-select');
+    if (!select) return;
+    selectedExplorerDb = select.value;
+    updateExplorerDbStatusBadge();
+    selectedExplorerTable = null;
+
+    const emptyState = document.getElementById('explorer-empty-state');
+    const detailsContainer = document.getElementById('explorer-details-container');
+    if (emptyState) emptyState.style.display = 'flex';
+    if (detailsContainer) detailsContainer.style.display = 'none';
+
+    loadExplorerTables(selectedExplorerDb);
+  }
+
+  async function switchActiveChatDb() {
+    if (!selectedExplorerDb) return;
+    const btnSet = document.getElementById('btn-set-active-db');
+    const succAlert = document.getElementById('explorer-alert-success');
+    const succText = document.getElementById('explorer-alert-success-text');
+    const errAlert = document.getElementById('explorer-alert-error');
+    const errText = document.getElementById('explorer-alert-error-text');
+
+    if (succAlert) succAlert.style.display = 'none';
+    if (errAlert) errAlert.style.display = 'none';
+    if (btnSet) btnSet.disabled = true;
+
+    try {
+      const res = await fetch('/api/v1/admin/switch-db', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ database_name: selectedExplorerDb })
+      });
+
+      if (!res.ok) {
+        const errJson = await res.json().catch(() => ({}));
+        throw new Error(errJson.detail || 'Failed to switch database.');
+      }
+
+      const data = await res.json();
+      activeChatDb = data.active_database;
+      updateHeaderActiveDbBadge(activeChatDb);
+      updateExplorerDbStatusBadge();
+
+      if (availableDatabases.length > 0) {
+        availableDatabases.forEach(d => {
+          d.is_current = (d.database_name.toLowerCase() === activeChatDb.toLowerCase());
+        });
+        const select = document.getElementById('explorer-db-select');
+        if (select) {
+          Array.from(select.options).forEach(opt => {
+            const isNowActive = opt.value.toLowerCase() === activeChatDb.toLowerCase();
+            opt.textContent = `${opt.value}${isNowActive ? ' (Active)' : ''}`;
+          });
+        }
+      }
+
+      if (succAlert && succText) {
+        succText.textContent = `⚡ Switched active database to "${activeChatDb}". ChatSQL is now querying this database.`;
+        succAlert.style.display = 'flex';
+        setTimeout(() => { succAlert.style.display = 'none'; }, 6000);
+      }
+
+      if (typeof fetchSchemaOverview === 'function') {
+        fetchSchemaOverview();
+      }
+    } catch (err) {
+      console.error('Error switching DB:', err);
+      if (errAlert && errText) {
+        errText.textContent = `❌ ${err.message}`;
+        errAlert.style.display = 'flex';
+      }
+    } finally {
+      if (btnSet) btnSet.disabled = false;
+    }
+  }
+
+  async function loadExplorerTables(dbName) {
+    const listEl = document.getElementById('explorer-table-list');
+    const countEl = document.getElementById('explorer-tables-count');
+    if (!listEl) return;
+
+    listEl.innerHTML = '<div style="padding: 1.5rem; text-align: center; color: var(--text-dim); font-size: 0.82rem;">Loading tables...</div>';
+    if (countEl) countEl.textContent = '...';
+
+    try {
+      const url = `/api/v1/admin/tables?db_name=${encodeURIComponent(dbName)}`;
+      const res = await fetch(url);
+      if (!res.ok) {
+        throw new Error('Failed to fetch tables for database');
+      }
+
+      explorerTables = await res.json();
+      if (countEl) countEl.textContent = `${explorerTables.length} ${explorerTables.length === 1 ? 'table' : 'tables'}`;
+
+      renderExplorerTableList(explorerTables);
+
+      if (!selectedExplorerTable && explorerTables.length > 0) {
+        selectExplorerTable(explorerTables[0].table_name);
+      } else if (selectedExplorerTable) {
+        const stillExists = explorerTables.find(t => t.table_name === selectedExplorerTable);
+        if (stillExists) {
+          selectExplorerTable(selectedExplorerTable);
+        } else if (explorerTables.length > 0) {
+          selectExplorerTable(explorerTables[0].table_name);
+        } else {
+          showExplorerEmptyState();
+        }
+      } else {
+        showExplorerEmptyState();
+      }
+    } catch (err) {
+      console.error('Failed to load explorer tables:', err);
+      listEl.innerHTML = `<div style="padding: 1rem; text-align: center; color: var(--danger); font-size: 0.8rem;">⚠️ ${escapeHtml(err.message)}</div>`;
+      if (countEl) countEl.textContent = '0 tables';
+      showExplorerEmptyState();
+    }
+  }
+
+  function renderExplorerTableList(tables) {
+    const listEl = document.getElementById('explorer-table-list');
+    if (!listEl) return;
+    listEl.innerHTML = '';
+
+    if (tables.length === 0) {
+      listEl.innerHTML = '<div style="padding: 1.5rem; text-align: center; color: var(--text-dim); font-size: 0.82rem;">No tables found in this database.</div>';
+      return;
+    }
+
+    tables.forEach(t => {
+      const btn = document.createElement('button');
+      btn.className = `explorer-table-btn ${t.table_name === selectedExplorerTable ? 'active' : ''}`;
+      btn.id = `btn-table-${t.table_name}`;
+      btn.onclick = () => selectExplorerTable(t.table_name);
+
+      btn.innerHTML = `
+        <div style="display: flex; align-items: center; gap: 0.4rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+          <span style="font-size: 0.85rem;">📄</span>
+          <span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${t.table_name}</span>
+        </div>
+        <span style="font-size: 0.72rem; color: #34d399; background: rgba(16, 185, 129, 0.12); padding: 1px 6px; border-radius: 9999px; font-weight: 600; white-space: nowrap; flex-shrink: 0;">
+          ${t.row_count.toLocaleString()}
+        </span>
+      `;
+      listEl.appendChild(btn);
+    });
+  }
+
+  function filterExplorerTables() {
+    const input = document.getElementById('explorer-table-search');
+    const q = input ? input.value.trim().toLowerCase() : '';
+    if (!q) {
+      renderExplorerTableList(explorerTables);
+      return;
+    }
+    const filtered = explorerTables.filter(t => t.table_name.toLowerCase().includes(q));
+    renderExplorerTableList(filtered);
+  }
+
+  function showExplorerEmptyState() {
+    const emptyState = document.getElementById('explorer-empty-state');
+    const detailsContainer = document.getElementById('explorer-details-container');
+    if (emptyState) emptyState.style.display = 'flex';
+    if (detailsContainer) detailsContainer.style.display = 'none';
+  }
+
+  function selectExplorerTable(tableName) {
+    selectedExplorerTable = tableName;
+
+    document.querySelectorAll('.explorer-table-btn').forEach(btn => {
+      btn.classList.toggle('active', btn.id === `btn-table-${tableName}`);
+    });
+
+    const emptyState = document.getElementById('explorer-empty-state');
+    const detailsContainer = document.getElementById('explorer-details-container');
+    const titleText = document.getElementById('selected-table-name-text');
+    const tableBadge = document.getElementById('explorer-table-badge');
+    const colsBadge = document.getElementById('explorer-cols-badge');
+
+    if (emptyState) emptyState.style.display = 'none';
+    if (detailsContainer) detailsContainer.style.display = 'flex';
+    if (titleText) titleText.textContent = tableName;
+
+    const tableMeta = explorerTables.find(t => t.table_name === tableName);
+    if (tableBadge && tableMeta) {
+      tableBadge.textContent = `${tableMeta.row_count.toLocaleString()} rows`;
+    }
+    if (colsBadge && tableMeta) {
+      colsBadge.textContent = `${tableMeta.columns.length} columns`;
+    }
+
+    currentRecordsOffset = 0;
+    loadTableRecords(tableName, 0);
+    loadTableSchema(tableName);
+  }
+
+  function switchTableTab(tab) {
+    currentTableTab = tab;
+    const btnRec = document.getElementById('tab-btn-records');
+    const btnSch = document.getElementById('tab-btn-schema');
+    const paneRec = document.getElementById('pane-table-records');
+    const paneSch = document.getElementById('pane-table-schema');
+
+    if (tab === 'records') {
+      if (btnRec) btnRec.classList.add('active');
+      if (btnSch) btnSch.classList.remove('active');
+      if (paneRec) paneRec.style.display = 'flex';
+      if (paneSch) paneSch.style.display = 'none';
+    } else {
+      if (btnSch) btnSch.classList.add('active');
+      if (btnRec) btnRec.classList.remove('active');
+      if (paneSch) paneSch.style.display = 'flex';
+      if (paneRec) paneRec.style.display = 'none';
+    }
+  }
+
+  async function loadTableRecords(tableName, offset = 0) {
+    const theadRow = document.getElementById('records-table-header');
+    const tbody = document.getElementById('records-table-body');
+    const pageInfo = document.getElementById('records-page-info');
+    const btnPrev = document.getElementById('btn-records-prev');
+    const btnNext = document.getElementById('btn-records-next');
+
+    if (tbody) {
+      tbody.innerHTML = '<tr><td style="text-align: center; color: var(--text-dim); padding: 1.5rem;">Loading records...</td></tr>';
+    }
+
+    try {
+      const url = `/api/v1/admin/tables/${encodeURIComponent(tableName)}/records?db_name=${encodeURIComponent(selectedExplorerDb)}&limit=${currentRecordsLimit}&offset=${offset}`;
+      const res = await fetch(url);
+      if (!res.ok) {
+        throw new Error('Failed to fetch table records.');
+      }
+
+      const data = await res.json();
+      currentRecordsOffset = data.offset;
+      totalTableRecords = data.total_records;
+      currentTableColumns = data.columns || [];
+      currentTableRecordsData = data.rows || [];
+
+      const tableBadge = document.getElementById('explorer-table-badge');
+      if (tableBadge) {
+        tableBadge.textContent = `${totalTableRecords.toLocaleString()} rows`;
+      }
+
+      if (theadRow) {
+        theadRow.innerHTML = '';
+        data.columns.forEach(col => {
+          const th = document.createElement('th');
+          th.textContent = col;
+          theadRow.appendChild(th);
+        });
+        const thAction = document.createElement('th');
+        thAction.style.width = '55px';
+        thAction.style.textAlign = 'center';
+        thAction.textContent = 'Action';
+        theadRow.appendChild(thAction);
+      }
+
+      if (tbody) {
+        tbody.innerHTML = '';
+        if (data.rows.length === 0) {
+          tbody.innerHTML = `<tr><td colspan="${Math.max(1, data.columns.length + 1)}" style="text-align: center; color: var(--text-dim); padding: 1.5rem;">No records found in table.</td></tr>`;
+        } else {
+          data.rows.forEach((row, rowIdx) => {
+            const tr = document.createElement('tr');
+            row.forEach(cell => {
+              const td = document.createElement('td');
+              if (cell === null || cell === undefined) {
+                td.innerHTML = '<span class="null-pill">NULL</span>';
+              } else {
+                td.textContent = String(cell);
+              }
+              tr.appendChild(td);
+            });
+            const tdAction = document.createElement('td');
+            tdAction.style.textAlign = 'center';
+            tdAction.innerHTML = `<button type="button" class="btn-danger-action" style="padding: 2px 7px; font-size: 0.72rem;" onclick="confirmDeleteRowByIndex(${rowIdx})" title="Delete row">🗑️</button>`;
+            tr.appendChild(tdAction);
+            tbody.appendChild(tr);
+          });
+        }
+      }
+
+      const startNum = totalTableRecords === 0 ? 0 : currentRecordsOffset + 1;
+      const endNum = Math.min(currentRecordsOffset + data.rows.length, totalTableRecords);
+      if (pageInfo) {
+        pageInfo.textContent = `Showing ${startNum.toLocaleString()}–${endNum.toLocaleString()} of ${totalTableRecords.toLocaleString()} records`;
+      }
+
+      if (btnPrev) btnPrev.disabled = currentRecordsOffset === 0;
+      if (btnNext) btnNext.disabled = endNum >= totalTableRecords;
+    } catch (err) {
+      console.error('Failed to load records:', err);
+      if (tbody) {
+        tbody.innerHTML = `<tr><td style="text-align: center; color: var(--danger); padding: 1.5rem;">⚠️ ${escapeHtml(err.message)}</td></tr>`;
+      }
+    }
+  }
+
+  async function loadTableSchema(tableName) {
+    const tbody = document.getElementById('schema-table-body');
+    if (tbody) {
+      tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: var(--text-dim); padding: 1.5rem;">Loading schema...</td></tr>';
+    }
+
+    try {
+      const url = `/api/v1/admin/tables/${encodeURIComponent(tableName)}/schema?db_name=${encodeURIComponent(selectedExplorerDb)}`;
+      const res = await fetch(url);
+      if (!res.ok) {
+        throw new Error('Failed to fetch table schema.');
+      }
+
+      const data = await res.json();
+      currentTablePkCols = (data.columns || []).filter(c => c.is_primary_key).map(c => c.name);
+
+      const colsBadge = document.getElementById('explorer-cols-badge');
+      if (colsBadge) {
+        colsBadge.textContent = `${data.columns.length} columns`;
+      }
+
+      if (tbody) {
+        tbody.innerHTML = '';
+        data.columns.forEach(col => {
+          const tr = document.createElement('tr');
+          const pkBadge = col.is_primary_key ? '<span class="pk-badge">🔑 PK</span>' : '—';
+          const nullText = col.is_nullable ? '<span style="color: var(--text-main);">YES</span>' : '<span style="color: var(--text-dim); font-weight:600;">NO</span>';
+          const defVal = col.default_value ? `<code style="font-size:0.75rem; color:var(--text-muted);">${escapeHtml(col.default_value)}</code>` : '—';
+
+          tr.innerHTML = `
+            <td><strong style="color: var(--accent); font-family: monospace;">${escapeHtml(col.name)}</strong></td>
+            <td><span style="font-family: monospace; font-size: 0.78rem; font-weight: 600; color: #38bdf8;">${escapeHtml(col.type)}</span></td>
+            <td>${pkBadge}</td>
+            <td>${nullText}</td>
+            <td>${defVal}</td>
+            <td style="text-align: center;">
+              <button type="button" class="btn-danger-action" style="padding: 2px 8px; font-size: 0.72rem;" onclick="confirmDropColumn('${escapeHtml(col.name)}')" title="Drop column">🗑️ Drop</button>
+            </td>
+          `;
+          tbody.appendChild(tr);
+        });
+      }
+    } catch (err) {
+      console.error('Failed to load schema:', err);
+      if (tbody) {
+        tbody.innerHTML = `<tr><td colspan="6" style="text-align: center; color: var(--danger); padding: 1.5rem;">⚠️ ${escapeHtml(err.message)}</td></tr>`;
+      }
+    }
+  }
+
+  function prevRecordsPage() {
+    if (!selectedExplorerTable) return;
+    const newOffset = Math.max(0, currentRecordsOffset - currentRecordsLimit);
+    loadTableRecords(selectedExplorerTable, newOffset);
+  }
+
+  function nextRecordsPage() {
+    if (!selectedExplorerTable) return;
+    const newOffset = currentRecordsOffset + currentRecordsLimit;
+    if (newOffset < totalTableRecords) {
+      loadTableRecords(selectedExplorerTable, newOffset);
+    }
+  }
+
+  function changeRecordsPageSize() {
+    const select = document.getElementById('records-page-size');
+    if (select) {
+      currentRecordsLimit = parseInt(select.value, 10) || 50;
+      currentRecordsOffset = 0;
+      if (selectedExplorerTable) {
+        loadTableRecords(selectedExplorerTable, 0);
+      }
+    }
+  }
+
+  function querySelectedTableInChat() {
+    if (!selectedExplorerTable) return;
+    switchView('chat');
+    const input = document.getElementById('prompt-input');
+    if (input) {
+      input.value = `Show the first 5 records from ${selectedExplorerTable}`;
+      input.focus();
+    }
+  }
+
+  function refreshCurrentTableRecords() {
+    if (selectedExplorerTable) {
+      loadTableRecords(selectedExplorerTable, currentRecordsOffset);
+      loadTableSchema(selectedExplorerTable);
+    }
+  }
+
+  function refreshExplorerData() {
+    loadExplorerDatabases();
+  }
+
+  function loadAdminTables() {
+    refreshExplorerData();
   }
 
   // Initialize
   checkCurrentUser();
   initBattleground();
+  loadExplorerDatabases();
 </script>
 
 </body>

@@ -45,3 +45,56 @@ class TableInfo(BaseModel):
 class DatabaseInfo(BaseModel):
     database_name: str
     is_current: bool
+
+
+class ColumnDetail(BaseModel):
+    name: str
+    type: str
+    is_nullable: bool
+    default_value: str | None = None
+    is_primary_key: bool = False
+
+
+class TableSchemaResponse(BaseModel):
+    database: str
+    table: str
+    columns: list[ColumnDetail]
+
+
+class TableRecordsResponse(BaseModel):
+    database: str
+    table: str
+    columns: list[str]
+    rows: list[list[Any]]
+    total_records: int
+    limit: int
+    offset: int
+
+
+class SwitchDatabaseRequest(BaseModel):
+    database_name: str
+
+
+class SwitchDatabaseResponse(BaseModel):
+    status: str = "success"
+    active_database: str
+    message: str
+
+
+class DeleteResponse(BaseModel):
+    status: str = "success"
+    message: str
+    affected_count: int | None = None
+
+
+class DeleteRowRequest(BaseModel):
+    database: str | None = None
+    condition: dict[str, Any]
+
+
+class MultiCsvImportResponse(BaseModel):
+    status: str
+    database: str
+    tables: list[CsvImportResponse]
+    total_rows_inserted: int
+

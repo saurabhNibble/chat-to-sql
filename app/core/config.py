@@ -44,23 +44,54 @@ class Settings(BaseSettings):
     MAX_QUERY_LIMIT: int = Field(default=10, description="Default LIMIT appended to generated queries")
     MAX_ALLOWED_LIMIT: int = Field(default=100, description="Maximum rows allowed for any execution")
 
-    # LLM Provider Configuration (Default: Groq - Free & Fast)
-    LLM_PROVIDER: str = Field(default="groq", description="LLM provider name: groq, openai, ollama, etc.")
-    LLM_BASE_URL: str = Field(default="https://api.groq.com/openai/v1", description="OpenAI-compatible base URL")
-    LLM_API_KEY: str | None = Field(default=None, description="API Key for the LLM provider (e.g. Groq or OpenAI)")
-    LLM_MODEL: str = Field(default="qwen/qwen3.8-27b", description="Model identifier (e.g. qwen/qwen3.8-27b, llama-3.3-70b-versatile)")
+    # LLM Provider Configuration (Default: Gemini - Google AI Studio)
+    LLM_PROVIDER: str = Field(default="gemini", description="LLM provider name: gemini, groq, openai, ollama, etc.")
+    LLM_BASE_URL: str = Field(
+        default="https://generativelanguage.googleapis.com/v1beta/openai/",
+        description="OpenAI-compatible base URL for Gemini / OpenAI / Groq",
+    )
+    LLM_API_KEY: str | None = Field(default=None, description="API Key for the LLM provider (e.g. Gemini, Groq, or OpenAI)")
+    LLM_MODEL: str = Field(
+        default="gemini-2.5-flash",
+        description="Model identifier (e.g. gemini-2.5-flash, gemini-2.0-flash, gemini-1.5-flash)",
+    )
 
-    # Backward compatibility aliases
+    # Provider specific aliases
+    GEMINI_API_KEY: str | None = Field(default=None, description="Google Gemini API Key from Google AI Studio")
+    GOOGLE_API_KEY: str | None = Field(default=None, description="Google API Key alias")
+    GROQ_API_KEY: str | None = Field(default=None, description="Groq API Key alias")
     OPENAI_API_KEY: str | None = Field(default=None, description="Legacy alias for LLM_API_KEY")
     OPENAI_MODEL: str | None = Field(default=None, description="Legacy alias for LLM_MODEL")
 
     @property
     def active_llm_api_key(self) -> str | None:
-        return self.LLM_API_KEY or self.OPENAI_API_KEY
+        return (
+            self.GEMINI_API_KEY
+            or self.GOOGLE_API_KEY
+            or self.LLM_API_KEY
+            or self.OPENAI_API_KEY
+            or self.GROQ_API_KEY
+        )
+
+    @property
+    def active_llm_base_url(self) -> str:
+        if self.LLM_PROVIDER.lower() == "gemini":
+            if not self.LLM_BASE_URL or "groq.com" in self.LLM_BASE_URL:
+                return "https://generativelanguage.googleapis.com/v1beta/openai/"
+        elif self.LLM_PROVIDER.lower() == "groq":
+            if not self.LLM_BASE_URL or "googleapis.com" in self.LLM_BASE_URL:
+                return "https://api.groq.com/openai/v1"
+        return self.LLM_BASE_URL or "https://generativelanguage.googleapis.com/v1beta/openai/"
 
     @property
     def active_llm_model(self) -> str:
-        return self.LLM_MODEL or self.OPENAI_MODEL or "llama-3.3-70b-versatile"
+        if self.LLM_MODEL:
+            if self.LLM_PROVIDER.lower() == "gemini" and any(m in self.LLM_MODEL.lower() for m in ["llama", "qwen", "mistral"]):
+                return "gemini-2.5-flash"
+            return self.LLM_MODEL
+        if self.OPENAI_MODEL:
+            return self.OPENAI_MODEL
+        return "gemini-2.5-flash" if self.LLM_PROVIDER.lower() == "gemini" else "llama-3.3-70b-versatile"
 
     # API Security & Rate Limiting
     API_KEY_ENABLED: bool = Field(default=False, description="Enable API key authentication")

@@ -181,3 +181,223 @@ def test_admin_excel_multi_sheet_flow(client: TestClient):
             pass
 
 
+def test_admin_explorer_schema_and_records(client: TestClient):
+    # Fetch tables first to pick an existing table in e-commerce
+    tbl_res = client.get("/api/v1/admin/tables")
+    assert tbl_res.status_code == 200
+    tables = tbl_res.json()
+    assert len(tables) > 0
+    sample_table = tables[0]["table_name"]
+
+    # 1. Test GET /tables/{table_name}/schema
+    schema_res = client.get(f"/api/v1/admin/tables/{sample_table}/schema")
+    assert schema_res.status_code == 200, schema_res.text
+    schema_data = schema_res.json()
+    assert schema_data["table"] == sample_table
+    assert "columns" in schema_data
+    assert len(schema_data["columns"]) > 0
+    col0 = schema_data["columns"][0]
+    assert "name" in col0
+    assert "type" in col0
+    assert "is_nullable" in col0
+    assert "is_primary_key" in col0
+
+    # 2. Test GET /tables/{table_name}/records with pagination
+    rec_res = client.get(f"/api/v1/admin/tables/{sample_table}/records?limit=10&offset=0")
+    assert rec_res.status_code == 200, rec_res.text
+    rec_data = rec_res.json()
+    assert rec_data["table"] == sample_table
+    assert rec_data["limit"] == 10
+    assert rec_data["offset"] == 0
+    assert "columns" in rec_data
+    assert "rows" in rec_data
+    assert "total_records" in rec_data
+    assert isinstance(rec_data["rows"], list)
+
+    # 3. Test non-existent table schema returns 404
+    non_existent = client.get("/api/v1/admin/tables/non_existent_table_9999/schema")
+    assert non_existent.status_code == 404
+
+
+def test_admin_switch_database(client: TestClient):
+    from app.core.config import get_settings
+
+    settings = get_settings()
+    current_db = settings.DB_NAME
+
+    # Switch to current database
+    res = client.post("/api/v1/admin/switch-db", json={"database_name": current_db})
+    assert res.status_code == 200, res.text
+    data = res.json()
+    assert data["status"] == "success"
+    assert data["active_database"] == current_db
+    assert "message" in data
+
+
+def test_admin_multiple_csv_import(client: TestClient):
+    csv1 = "sku,product_name,stock\nSKU-1,Laptop,15\nSKU-2,Phone,30\n"
+    csv2 = "branch_id,city,manager\n101,New York,Alice\n102,Chicago,Bob\n"
+
+    tbl1 = "test_multi_prod"
+    tbl2 = "test_multi_branches"
+
+    try:
+        files = [
+            ("files", (f"{tbl1}.csv", io.BytesIO(csv1.encode("utf-8")), "text/csv")),
+            ("files", (f"{tbl2}.csv", io.BytesIO(csv2.encode("utf-8")), "text/csv")),
+        ]
+        res = client.post("/api/v1/admin/import-multiple-csvs", files=files, data={"mode": "replace"})
+        assert res.status_code == 200, res.text
+        data = res.json()
+        assert data["status"] == "success"
+        assert data["total_rows_inserted"] == 4
+        assert len(data["tables"]) == 2
+
+        created_tables = {t["table"] for t in data["tables"]}
+        assert tbl1 in created_tables
+        assert tbl2 in created_tables
+
+        # Check records from each table
+        r1 = client.get(f"/api/v1/admin/tables/{tbl1}/records")
+        assert r1.status_code == 200
+        assert r1.json()["total_records"] == 2
+
+        r2 = client.get(f"/api/v1/admin/tables/{tbl2}/records")
+        assert r2.status_code == 200
+        assert r2.json()["total_records"] == 2
+
+    finally:
+        for t in (tbl1, tbl2):
+            try:
+                with get_db_connection() as conn:
+                    with conn.cursor() as cur:
+                        cur.execute(f'DROP TABLE IF EXISTS "{t}" CASCADE;')
+                    conn.commit()
+            except Exception:
+                pass
+
+
+def test_admin_column_row_table_deletion_flow(client: TestClient):
+    table_name = "test_crud_deletions"
+
+    # Setup table with raw SQL
+    with get_db_connection() as conn:
+        with conn.cursor() as cur:
+            cur.execute(f'DROP TABLE IF EXISTS "{table_name}" CASCADE;')
+            cur.execute(f"""
+                CREATE TABLE "{table_name}" (
+                    id SERIAL PRIMARY KEY,
+                    item_code TEXT NOT NULL,
+                    notes TEXT,
+                    price NUMERIC
+                );
+                INSERT INTO "{table_name}" (item_code, notes, price) VALUES
+                    ('A100', 'First item', 10.50),
+                    ('B200', 'Second item', 20.00),
+                    ('C300', 'Third item', 30.25);
+            """)
+        conn.commit()
+
+    try:
+        # 1. Test Drop Column
+        res_col = client.delete(f"/api/v1/admin/tables/{table_name}/columns/notes")
+        assert res_col.status_code == 200, res_col.text
+        assert "Column 'notes' was successfully dropped" in res_col.json()["message"]
+
+        schema_res = client.get(f"/api/v1/admin/tables/{table_name}/schema")
+        assert schema_res.status_code == 200
+        col_names = [c["name"] for c in schema_res.json()["columns"]]
+        assert "notes" not in col_names
+        assert "item_code" in col_names
+
+        # 2. Test Delete Row with condition
+        res_del_row = client.post(
+            f"/api/v1/admin/tables/{table_name}/rows/delete",
+            json={"condition": {"item_code": "B200"}},
+        )
+        assert res_del_row.status_code == 200, res_del_row.text
+        assert res_del_row.json()["affected_count"] == 1
+
+        rec_res = client.get(f"/api/v1/admin/tables/{table_name}/records")
+        assert rec_res.json()["total_records"] == 2
+
+        # 3. Test Truncate Table
+        res_trunc = client.post(f"/api/v1/admin/tables/{table_name}/truncate")
+        assert res_trunc.status_code == 200, res_trunc.text
+
+        rec_res2 = client.get(f"/api/v1/admin/tables/{table_name}/records")
+        assert rec_res2.json()["total_records"] == 0
+
+        # 4. Test Drop Table
+        res_drop_tbl = client.delete(f"/api/v1/admin/tables/{table_name}")
+        assert res_drop_tbl.status_code == 200, res_drop_tbl.text
+
+        # Verify table is gone
+        tbls = client.get("/api/v1/admin/tables").json()
+        assert not any(t["table_name"] == table_name for t in tbls)
+
+    finally:
+        try:
+            with get_db_connection() as conn:
+                with conn.cursor() as cur:
+                    cur.execute(f'DROP TABLE IF EXISTS "{table_name}" CASCADE;')
+                conn.commit()
+        except Exception:
+            pass
+
+
+def test_admin_drop_database(client: TestClient):
+    import psycopg2
+    from app.core.config import get_settings
+
+    settings = get_settings()
+    test_db = "test_admin_drop_temp_db"
+
+    # Create temporary database via postgres maintenance DB
+    conn = psycopg2.connect(
+        dbname="postgres",
+        user=settings.DB_USER,
+        password=settings.DB_PASSWORD,
+        host=settings.DB_HOST,
+        port=settings.DB_PORT,
+    )
+    conn.autocommit = True
+    with conn.cursor() as cur:
+        cur.execute(f'CREATE DATABASE "{test_db}";')
+    conn.close()
+
+    try:
+        # 1. Attempt to drop protected system db -> must fail
+        res_forbidden = client.delete("/api/v1/admin/databases/postgres")
+        assert res_forbidden.status_code == 400
+        assert "cannot be deleted" in res_forbidden.json()["detail"]
+
+        # 2. Successfully drop test_db
+        res_drop = client.delete(f"/api/v1/admin/databases/{test_db}")
+        assert res_drop.status_code == 200, res_drop.text
+        assert res_drop.json()["status"] == "success"
+
+        # Verify database is gone
+        dbs = [d["database_name"] for d in client.get("/api/v1/admin/databases").json()]
+        assert test_db not in dbs
+
+    finally:
+        # Fallback cleanup
+        try:
+            conn = psycopg2.connect(
+                dbname="postgres",
+                user=settings.DB_USER,
+                password=settings.DB_PASSWORD,
+                host=settings.DB_HOST,
+                port=settings.DB_PORT,
+            )
+            conn.autocommit = True
+            with conn.cursor() as cur:
+                cur.execute(f'DROP DATABASE IF EXISTS "{test_db}";')
+            conn.close()
+        except Exception:
+            pass
+
+
+
+

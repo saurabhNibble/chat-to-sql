@@ -100,3 +100,65 @@ def ping_database() -> bool:
     except Exception as exc:
         logger.warning(f"Database ping failed: {exc}")
         return False
+
+
+@contextmanager
+def get_db_connection_for(db_name: str | None = None) -> Generator[PgConnection, None, None]:
+    """Provide a connection to any database on the PostgreSQL instance."""
+    clean_target = (db_name or settings.DB_NAME).strip()
+    if clean_target.lower() == settings.DB_NAME.lower():
+        with get_db_connection() as conn:
+            yield conn
+    else:
+        import psycopg2
+
+        conn = psycopg2.connect(
+            dbname=clean_target,
+            user=settings.DB_USER,
+            password=settings.DB_PASSWORD,
+            host=settings.DB_HOST,
+            port=settings.DB_PORT,
+        )
+        try:
+            yield conn
+        finally:
+            conn.close()
+
+
+@contextmanager
+def get_readonly_connection_for(db_name: str | None = None) -> Generator[PgConnection, None, None]:
+    """Provide a strictly READ-ONLY connection with statement timeout to any database."""
+    with get_db_connection_for(db_name) as conn:
+        conn.set_session(readonly=True, autocommit=True)
+        with conn.cursor() as cursor:
+            cursor.execute(f"SET statement_timeout = {settings.DB_STATEMENT_TIMEOUT_MS};")
+        try:
+            yield conn
+        finally:
+            try:
+                conn.set_session(readonly=False, autocommit=False)
+            except Exception:
+                pass
+
+
+def switch_active_database(new_db_name: str) -> None:
+    """
+    Switch the active database for the application connection pool and schema cache.
+    Allows the ChatSQL tutor to immediately query the selected database.
+    """
+    global settings
+    clean_name = new_db_name.strip()
+    close_db_pool()
+    settings.DB_NAME = clean_name
+    init_db_pool()
+
+    # Invalidate and refresh schema introspection cache
+    try:
+        from app.db.schema import extract_schema
+
+        extract_schema(force_refresh=True)
+    except Exception as exc:
+        logger.warning(f"Could not refresh schema after switching database: {exc}")
+
+    logger.info(f"Switched active database to '{clean_name}'.")
+
